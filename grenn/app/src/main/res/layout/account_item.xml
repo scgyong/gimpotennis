@@ -55,6 +55,11 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         >
+        <WebView
+            android:layout_width="80dp"
+            android:layout_height="match_parent"
+            android:id="@+id/webView"
+            />
         <ImageView
             android:layout_width="0dp"
             android:layout_weight="3"

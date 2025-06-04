@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import kr.ac.tukorea.ge.scgyong.gtenn.databinding.AccountItemBinding;
 
@@ -97,6 +98,7 @@ public class AccountAdapter extends RecyclerView.Adapter<AccountAdapter.AccountV
     public void loadAccounts(Context context) {
         SharedPreferences prefs = context.getSharedPreferences("PREFS", Context.MODE_PRIVATE);
         String value = prefs.getString("accounts", "[]");
+        Log.d("AcountAdapter", value);
 
         try {
             ArrayList<Account> accounts = new ArrayList<>();
@@ -128,6 +130,7 @@ public class AccountAdapter extends RecyclerView.Adapter<AccountAdapter.AccountV
                 accountList.addAll(accounts);
                 notifyDataSetChanged();
             }
+            Log.d("AcountAdapter", "size=" + accountList.size());
         } catch (Exception e) {
             e.printStackTrace();
         }

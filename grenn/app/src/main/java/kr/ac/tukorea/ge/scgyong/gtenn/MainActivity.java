@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 
@@ -57,5 +58,13 @@ public class MainActivity extends AppCompatActivity {
 //        }
         accounts.add(new Account());
         adapter.notifyItemInserted(accounts.size() - 1); // 해당 항목만 갱신
+    }
+
+    public void onBtnStart(View view) {
+        for (int i = 0; i < accounts.size(); i++) {
+            AccountAdapter.AccountViewHolder holder = (AccountAdapter.AccountViewHolder) ui.recyclerView.findViewHolderForAdapterPosition(i);
+            Account acnt = accounts.get(i);
+            new TennisReservation(acnt, holder.binding).start();
+        }
     }
 }

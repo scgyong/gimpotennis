@@ -20,6 +20,17 @@
             android:id="@+id/btnAdd"
             android:onClick="onBtnAdd"
             />
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1"
+            />
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Start"
+            android:onClick="onBtnStart"
+            />
     </LinearLayout>
     <androidx.recyclerview.widget.RecyclerView
         android:layout_width="match_parent"
