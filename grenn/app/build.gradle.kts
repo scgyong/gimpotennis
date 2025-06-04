@@ -6,6 +6,9 @@ android {
     namespace = "kr.ac.tukorea.ge.scgyong.gtenn"
     compileSdk = 35
 
+    buildFeatures {
+        viewBinding = true
+    }
     defaultConfig {
         applicationId = "kr.ac.tukorea.ge.scgyong.gtenn"
         minSdk = 24
