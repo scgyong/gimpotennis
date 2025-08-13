@@ -1,0 +1,129 @@
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+h1 {
+    text-align: center;
+}
+.cal-parent {
+    display: flex;
+    align-items: start;
+    justify-content: center;
+}
+.calendar {
+    flex: 0 0 440px;
+    margin: 0 50px 0 0;
+}
+
+.calendar .courts {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 1px 0 0 1px;
+}
+
+.calendar .courts li {
+    width: 12.5%;
+    height: 45px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    list-style: none;
+    text-align: center;
+    border: 1px solid #CCC;
+    cursor: pointer;
+}
+
+.calendar .dates {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 1px 0 0 1px;
+}
+
+.calendar .weekdays {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 1px 0 0 1px;
+    cursor: pointer;
+}
+
+.calendar .weekdays li {
+    width: 14.285%;
+    list-style: none;
+    text-align: center;
+}
+
+.calendar .dates li {
+    width: 14.285%;
+    list-style: none;
+}
+
+.calendar .dates li p {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin: -1px 0 0 -1px;
+    height: 55px;
+    border: 1px solid #CCC;
+    font-size: 14px;
+}
+
+.right-panel {
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.hours-select-box {
+    border: 1px solid #ddd;
+    padding: 15px;
+}
+
+.time-select-box {
+    border: 1px solid #ddd;
+    margin-top: 15px;
+    padding: 15px;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.hour-item {
+    width: 90px;
+    padding: 10px 5px;
+}
+
+.hour-item label {
+    cursor: pointer;
+}
+
+.hour-item.ok {
+    background: #5FB3EC;
+}
+
+li.no {
+    background: #F9F9F9;
+    cursor: pointer;
+}
+
+li.on {
+    background: #FAEFDD;
+    cursor: pointer;
+}
+
+li.off {
+    background: #DFEEFD;
+}
+
+li.ok {
+    background: #5FB3EC;
+    color: #FFF;
+}
+.calendar .head {
+    text-align: center;
+}
+#year_month {
+    font-size: 25px;
+    font-weight: bold;
+}

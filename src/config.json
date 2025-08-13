@@ -1,0 +1,41 @@
+{
+    "groupName": "굿맨",
+    "groupCount": 4,
+    "!sessions": [
+        {
+            "user_id": "scgyong",
+            "user_pw": "j9kdzpvndocj5xm/d"
+        }
+    ],
+    "sessions": [
+        {
+            "user_id": "scgyong",
+            "user_pw": "j9kdzpvndocj5xm/d"
+        },
+        {
+            "user_id": "hongchs",
+            "user_pw": "cs19930758!"
+        }
+    ],
+    "reservations": [
+        {
+            "court": 5,
+            "date": "20250814", 
+            "time": "08:00",
+            "hours": 2
+        },
+        {
+            "court": 5,
+            "date": "20250815", 
+            "time": "12:00",
+            "hours": 2
+        },
+        {
+            "court": 5,
+            "date": "20250816", 
+            "time": "15:00",
+            "hours": 2
+        }
+    ]
+}
+

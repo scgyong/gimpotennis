@@ -1,0 +1,22 @@
+{
+  "name": "gimpocourt",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "Kiyong Kim",
+  "type": "commonjs",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "electron": "^37.2.5"
+  },
+  "build": {
+    "appId": "net.scgyong.courtresv",
+    "productName": "GimpoCourtResv",
+    "mac": {
+      "icon": "ui/icon.icns"
+    }
+  }
+}
