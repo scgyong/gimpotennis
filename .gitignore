@@ -35,3 +35,4 @@ Desktop.ini
 .env
 .env.*
 config.js # If it contains sensitive configuration
+
