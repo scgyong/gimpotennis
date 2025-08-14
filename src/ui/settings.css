@@ -3,13 +3,32 @@ body {
     flex-direction: column;
     justify-content: center;
 }
-h1 {
-    text-align: center;
+.titlebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3.0rem; /* 적절한 높이 설정 */
+    z-index: 1000; /* 다른 요소 위에 오도록 */
+    border-bottom: 1px solid #ccc; /* 구분선 (선택사항) */
+    display: flex;
+    justify-content: space-between;
+    background: #FFE;
+}
+
+.titlebar h1 {
+    line-height: 3rem;
+    font-size: 2.35rem;
+    margin: 0;
+  }
+.titlebar button.btn-close {
+    margin: 10px;
 }
 .cal-parent {
     display: flex;
     align-items: start;
     justify-content: center;
+    margin-top: 3.7rem;
 }
 .calendar {
     flex: 0 0 440px;
@@ -77,6 +96,7 @@ h1 {
 }
 
 .hours-select-box {
+    display: flex;
     border: 1px solid #ddd;
     padding: 15px;
 }
@@ -87,6 +107,26 @@ h1 {
     padding: 15px;
     display: flex;
     flex-wrap: wrap;
+}
+
+.temp-output-box {
+    border: 1px solid #ddd;
+    margin-top: 15px;
+    padding: 15px;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.output-item {
+    border: 1px solid #DDC;
+    border-radius: 8px;
+    margin: 4px 0px;
+    padding: 4px 10px;
+    background: #FFE;
+}
+
+.hours-item {
+    width: 90px;
 }
 
 .hour-item {
@@ -126,4 +166,98 @@ li.ok {
 #year_month {
     font-size: 25px;
     font-weight: bold;
+}
+
+.right-panel .btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #38b6f1;
+    margin: 30px 0 0 0;
+    height: 55px;
+}
+
+.lower-box {
+    margin: 0px 30px;
+}
+
+.item-title {
+  border-left: 3px solid #38b6f1;
+  padding: 0 0 0 8px;
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin: 20px 0 5px 0;
+}
+
+.menu-parent {
+    border: 1px solid #ddd;
+    padding: 15px;
+    display: flex;
+    /*justify-content: center;*/
+    flex-wrap: wrap;
+}
+
+.menu-wrapper {
+  display: flex;
+  align-items: center;
+  margin: 0 20px;
+}
+
+.menu-item {
+  width: 350px;
+  border: 1px solid #DDC;
+  border-radius: 8px;
+  margin: 4px 0px;
+  padding: 4px 20px;
+  background: #EEF;
+  cursor: pointer;
+}
+
+.menu-action {
+}
+
+.account-parent {
+    border: 1px solid #ddd;
+    padding: 15px;
+    display: flex;
+    /*justify-content: center;*/
+    flex-wrap: wrap;
+}
+
+.account-wrapper {
+  display: flex;
+  align-items: center;
+  margin: 0px 20px;
+}
+
+.account-item {
+  border: 1px solid #DDC;
+  border-radius: 8px;
+  margin: 4px 0px;
+  padding: 4px 20px;
+  background: #EEF;
+  display: flex;
+  align-items: center;
+}
+
+.account-id-label {
+  display: inline-block;
+  flex-shrink: 0;
+  text-align: right;
+  margin: 0px 5px 0px 20px;
+}
+
+.account-pw-label {
+  display: inline-block;
+  flex-shrink: 0;
+  text-align: right;
+  margin: 0px 5px 0px 20px;
+}
+
+.dialog-buttons {
+  margin: 15px 30px;
+}
+
+.dialog-buttons button.btn-success {
+  padding: 20px;
 }

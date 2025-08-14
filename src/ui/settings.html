@@ -3,156 +3,14 @@
     <link href="lib/bootstrap.min.css" rel="stylesheet">
     <link href="settings.css" rel="stylesheet">
     <script src="lib/jquery-3.7.1.min.js" ></script>
-    <script>
-function getThisWeekSunday() {
-  const today = new Date();
-  const day = today.getDay(); // 0 (일요일) ~ 6 (토요일)
-  const sunday = new Date(today);
-  sunday.setDate(today.getDate() - day); // 이번 주 일요일은 현재 날짜에서 day 만큼 빼면 됨
-  sunday.setHours(0, 0, 0, 0); // 시간 초기화 (선택사항)
-  return sunday;
-}
-function getLastDayOfNextMonth() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth(); // 현재 월 (0부터 시작)
-
-  // 다음 달의 첫째 날을 기준으로, 그 다음 달 0일 = 다음 달의 마지막 날
-  const lastDay = new Date(year, month + 2, 0);
-  return lastDay;
-}
-function getTargetDate() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth(); // 0~11
-  const day = today.getDate();
-
-  let target;
-
-  if (day <= 4) {
-    // 이번 달 15일
-    target = new Date(year, month, 15);
-  } else if (day <= 19) {
-    // 이번 달 말일 (다음 달 0일)
-    target = new Date(year, month + 1, 0);
-  } else {
-    // 다음 달 15일
-    target = new Date(year, month + 1, 15);
-  }
-
-  return target;
-}
-function makeCalendar() {
-  let today = new Date()
-  today = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-  let d = getThisWeekSunday()
-  let end = getLastDayOfNextMonth()
-  let td = getTargetDate()
-  // console.log({today, d, end, td})
-  let html = ''
-  document.querySelector('#year_month').innerText = `${d.getFullYear()}.${d.getMonth()+1}`
-  while (d <= end) {
-    let arg = 'class="no"'
-    if (today <= d) {
-      const ymd = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate()
-      if (d <= td) {
-        arg = `class="date on week${d.getDay()}" data="${ymd}"`
-      } else {
-        arg = `class="date no" data="${ymd}"`
-      }
-    }
-    // console.log(d, td, arg)
-    const month = d.getMonth() + 1
-    let day = d.getDate()
-    if (day == 1) {
-      day = `${month}/${day}`
-    }
-    // console.log(arg)
-    html += `<li ${arg}><p>${day}</p></li>`
-
-    // 날짜를 하루 증가
-    d.setDate(d.getDate() + 1);
-  }
-  while (d.getDay() != 0) {
-    html += '<li><p></p></li>'
-    d.setDate(d.getDate() + 1);
-  }
-  const dates_ul = document.querySelector('.calendar ul.dates')
-  // console.log(html)
-  dates_ul.innerHTML = html
-}
-function makeHours() {
-  let hour = 6
-  const end = 23
-  let html = ''
-  while (hour <= end) {
-    const hour_str = hour.toString().padStart(2, '0') + ':00';
-    html += `
-      <div class="hour-item" id="hour_item_${hour}">
-        <input type="radio" id="hour_radio_${hour}" name="hour_start" value="${hour}">
-        <label for="hour_radio_${hour}">${hour_str}</label>
-      </div>
-    `
-    hour += 1
-  }
-  document.querySelector('.time-select-box').innerHTML = html
-}
-function hilightHours() {
-  const $hour = $('.hour-item input[type="radio"]:checked')
-  if ($hour.length == 0) return;
-
-  $('.hour-item.ok').removeClass('ok')
-
-  const hours = $('input.hours-radio[type="radio"]:checked').val()
-  const hour = Number($hour.val())
-
-  console.log({hour,hours})
-  $(`#hour_item_${hour}`).addClass('ok')
-  if (hours > 1) {
-    $(`#hour_item_${hour+1}`).addClass('ok')
-  }
-}
-function onLoad() {
-  makeCalendar()
-  makeHours()
-
-  const $court1 = $('.court[data-court="1"]');
-  $court1.addClass('ok')
-
-  $('li.court').click((e)=>{
-    const $target = $(e.currentTarget);
-    const court = $target.data().court
-    $('li.court.ok').removeClass('ok')
-    $target.addClass('ok')
-  })
-  $('li.weekday').click((e)=>{
-    const $target = $(e.currentTarget);
-    const withoutShift = !e.shiftKey
-    if (withoutShift) $('li.date.ok').removeClass('ok');
-    $(`.week${$target.data().week}`).addClass('ok')
-  })
-  $('li.date').click((e)=>{
-    const withoutShift = !e.shiftKey
-    const $target = $(e.currentTarget);
-    if (withoutShift) {
-      $('li.date.ok').removeClass('ok');
-    } else {
-      console.log($target.hasClass('ok'))
-      if ($target.hasClass('ok')) {
-        $target.removeClass('ok')
-        return
-      }
-    }
-    $target.addClass('ok')
-  })
-  $('.hour-item input').click((e)=>{
-    hilightHours()
-  })
-}
-    </script>
+    <script src="settings.js"></script>
   </head>
   <body onload="onLoad()">
-    <h1>Settings</h1>
+    <div class="titlebar">
+      <p>&nbsp;</p>
+      <h1>Settings</h1>
+      <button type="button" class="btn-close" aria-label="Close" onclick="window.close()"></button>
+    </div>
     <div class="cal-parent">
       <div class="calendar">
         <ul class="courts">
@@ -182,14 +40,34 @@ function onLoad() {
       </div>
       <div class="right-panel">
         <div class="hours-select-box">
-          <input type="radio" class="hours-radio" id="hour1" name="hours" value="1" checked>
-          <label for="hour1" class="hours-label">1시간</label>
-          <input type="radio" class="hours-radio" id="hour2" name="hours" value="2">
-          <label for="hour2" class="hours-label">2시간</label>
+          <div class="hours-item">
+            <input type="radio" class="hours-radio" id="hour1" name="hours" value="1" checked>
+            <label for="hour1" class="hours-label">1시간</label>
+          </div>
+          <div class="hours-item">
+            <input type="radio" class="hours-radio" id="hour2" name="hours" value="2">
+            <label for="hour2" class="hours-label">2시간</label>
+          </div>
         </div>
         <div class="time-select-box">
         </div>
+        <div class="temp-output-box">
+        </div>
+        <div class="btn btn-primary" onclick="addToMenu()">Add</div>
       </div>
     </div>
+    <div class="lower-box">
+      <div class="item-title">Reservation Menu</div>
+      <div class="menu-parent"></div>
+      <div style="display:flex;justify-content: space-between; align-items: center;">
+        <div class="item-title">Accounts</div>
+        <button class="btn btn-sm btn-outline-primary" onclick="addAccount()">➕ Add Account</button>
+      </div>
+      <div class="account-parent"></div>
+    </div>
+    <div class="dialog-buttons">
+      <button class="btn btn-success" onclick="saveSettings()">Save Settings and Close</button>
+    </div>
+
   </body>
 </html>

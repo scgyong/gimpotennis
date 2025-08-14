@@ -1,5 +1,5 @@
 // # scripts.js
-const config = require('./config')
+const configLoader = require('./configLoader')
 
 const re_date = /^\d{8}$/;
 const re_time = /^(\d{2}):00$/;
@@ -9,7 +9,11 @@ class Scripts {
         return `
             document.querySelector('#login_id').value='${uid}'
             document.querySelector('#login_pw').value='${upw}'
-            document.flogin.submit()
+            if ('${upw}' !== '') {
+                document.flogin.submit()
+            } else {
+                alert('설정에서 계정을 추가하시오')
+            }
         `
     }
     confirm(upw) {
@@ -18,7 +22,15 @@ class Scripts {
             document.fmemberconfirm.submit()
         `
     }
+    showCalendar() {
+        return `document.querySelector('.n_calendar').scrollIntoView()`
+    }
+    hilightDate(ymd) {
+        return `$('.txt li.on[data="${ymd}"]').addClass('ok')`
+    }
     reservation(r) {
+        const config = configLoader.getConfig()
+
         const names = [
             '', 'A관', 'B관', 'C관', 'D관', 'E관', 'F관', 'G관', 'H관'
         ]

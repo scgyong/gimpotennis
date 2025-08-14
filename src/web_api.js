@@ -29,6 +29,8 @@ class WebApi {
             this.window.loadURL(MAIN_URL)
         } else if (currentUrl.startsWith(CONFIRM_URL)) {
             this.window.webContents.executeJavaScript(scripts.confirm(this.session.user_pw))
+        } else if (currentUrl == MAIN_URL) {
+            this.window.webContents.executeJavaScript(scripts.showCalendar())
         }
     }
     navigate(event, target) {
@@ -40,6 +42,7 @@ class WebApi {
         }
     }
     onMenuReservation(r) {
+        this.window.webContents.executeJavaScript(scripts.hilightDate(r.date))
         const script = scripts.reservation(r)
         console.log(script)
         this.window.webContents.executeJavaScript(script)

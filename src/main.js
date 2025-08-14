@@ -2,7 +2,8 @@
 const { app, BrowserWindow, Menu, ipcMain } = require('electron');
 const path = require('path');
 const { WebApi } = require('./web_api')
-const config = require('./config.json')
+const { SettingsApi } = require('./settings_api')
+const configLoader = require('./configLoader')
 
 let webApiMap = {};
 function getWebApiFromWindow(win) {
@@ -13,7 +14,16 @@ function getWebApiFromWindow(win) {
   return null
 }
 
+configLoader.setReloadCallback(()=>{
+  console.log('config reloadCallback')
+  const config = configLoader.getConfig()
+  buildMenuFromReservations(config.reservations)
+})
+
+const settings_api = new SettingsApi()
+
 function createWindows() {
+  const config = configLoader.getConfig()
   // Main reservation window (initially blank)
   for (const sess of config.sessions) {
     const win = new BrowserWindow({
@@ -53,13 +63,27 @@ function createWindows() {
     const web_api = new WebApi()
     web_api.start(win, sess)
     webApiMap[sess.user_id] = web_api
+
+    win.on('page-title-updated', (event) => {
+      event.preventDefault(); // 자동 title 변경 막기
+    });
+    win.setTitle(sess.user_id)
   }
 
   buildMenuFromReservations(config.reservations)
 }
 
 function fmtDate(yyyymmdd) {
-  return `${yyyymmdd.slice(0,4)}-${yyyymmdd.slice(4,6)}-${yyyymmdd.slice(6,8)}`;
+  const year = yyyymmdd.slice(0, 4);
+  const month = yyyymmdd.slice(4, 6);
+  const day = yyyymmdd.slice(6, 8);
+
+  const date = new Date(`${year}-${month}-${day}`);
+
+  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+  const weekday = weekdays[date.getDay()];
+
+  return `${year}-${month}-${day}(${weekday})`;
 }
 
 function buildMenuFromReservations(reservations) {
@@ -138,8 +162,8 @@ function showSettings(parentWin) {
 
   // 새로 만들기 (parent를 주면 모달처럼 UX 가능)
   settingsWindow = new BrowserWindow({
-    width: 520,
-    height: 520,
+    width: 930,
+    height: 900,
     resizable: false,
     minimizable: false,
     maximizable: false,
@@ -155,10 +179,12 @@ function showSettings(parentWin) {
     }
   });
 
-  // 파일 또는 로컬 페이지 로드
-  settingsWindow.loadFile(path.join(__dirname, 'ui/settings.html'));
+  settings_api.setWindow(settingsWindow)
 
-  settingsWindow.on('closed', () => { settingsWindow = null; });
+  settingsWindow.on('closed', () => {
+    settingsWindow = null; 
+    settings_api.setWindow(null)
+  });
 }
 
 app.whenReady().then(createWindows);
@@ -170,6 +196,10 @@ ipcMain.handle('navigate', (event, user_id, target) => {
     return
   }
   web_api.navigate(event, target)
+});
+
+ipcMain.handle('settings:save', (event, cfg) => {
+  settings_api.save(event, cfg)
 });
 
 app.on('window-all-closed', () => {

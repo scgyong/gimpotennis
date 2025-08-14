@@ -15,27 +15,108 @@
         {
             "user_id": "hongchs",
             "user_pw": "cs19930758!"
+        },
+        {
+            "user_id": "tmddnjs939",
+            "user_pw": "Wlalsgimpo07@"
         }
     ],
     "reservations": [
         {
-            "court": 5,
-            "date": "20250814", 
-            "time": "08:00",
+            "court": 1,
+            "date": "20250815",
+            "time": "06:00",
             "hours": 2
         },
         {
-            "court": 5,
-            "date": "20250815", 
-            "time": "12:00",
+            "court": 2,
+            "date": "20250815",
+            "time": "06:00",
             "hours": 2
         },
         {
-            "court": 5,
-            "date": "20250816", 
-            "time": "15:00",
+            "court": 1,
+            "date": "20250818",
+            "time": "06:00",
             "hours": 2
+        },
+        {
+            "court": 2,
+            "date": "20250818",
+            "time": "06:00",
+            "hours": 2
+        },
+        {
+            "court": 1,
+            "date": "20250820",
+            "time": "06:00",
+            "hours": 2
+        },
+        {
+            "court": 2,
+            "date": "20250820",
+            "time": "06:00",
+            "hours": 2
+        },
+        {
+            "court": 1,
+            "date": "20250822",
+            "time": "06:00",
+            "hours": 2
+        },
+        {
+            "court": 2,
+            "date": "20250822",
+            "time": "06:00",
+            "hours": 2
+        },
+        {
+            "court": 1,
+            "date": "20250825",
+            "time": "06:00",
+            "hours": 2
+        },
+        {
+            "court": 2,
+            "date": "20250825",
+            "time": "06:00",
+            "hours": 2
+        },
+        {
+            "court": 1,
+            "date": "20250827",
+            "time": "06:00",
+            "hours": 2
+        },
+        {
+            "court": 2,
+            "date": "20250827",
+            "time": "06:00",
+            "hours": 2
+        },
+        {
+            "court": 1,
+            "date": "20250829",
+            "time": "06:00",
+            "hours": 2
+        },
+        {
+            "court": 2,
+            "date": "20250829",
+            "time": "06:00",
+            "hours": 2
+        },
+        {
+            "court": 1,
+            "date": "20250829",
+            "time": "19:00",
+            "hours": 1
+        },
+        {
+            "court": 1,
+            "date": "20250830",
+            "time": "11:00",
+            "hours": 1
         }
     ]
 }
-
