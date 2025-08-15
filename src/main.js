@@ -1,7 +1,7 @@
 // main.js
 const { app, BrowserWindow, Menu, ipcMain } = require('electron');
 const path = require('path');
-const { WebApi } = require('./web_api')
+const { WebApi, handleTimeboard } = require('./web_api')
 const { SettingsApi } = require('./settings_api')
 const configLoader = require('./configLoader')
 
@@ -17,7 +17,7 @@ function getWebApiFromWindow(win) {
 configLoader.setReloadCallback(()=>{
   console.log('config reloadCallback')
   const config = configLoader.getConfig()
-  buildMenuFromReservations(config.reservations)
+  buildMenuFromReservations(config)
 })
 
 const settings_api = new SettingsApi()
@@ -70,7 +70,7 @@ function createWindows() {
     win.setTitle(sess.user_id)
   }
 
-  buildMenuFromReservations(config.reservations)
+  buildMenuFromReservations(config)
 }
 
 function fmtDate(yyyymmdd) {
@@ -86,7 +86,8 @@ function fmtDate(yyyymmdd) {
   return `${year}-${month}-${day}(${weekday})`;
 }
 
-function buildMenuFromReservations(reservations) {
+function buildMenuFromReservations(config) {
+  const reservations = config.reservations
   // 중복 제거(같은 court/date/time/hours 조합)
   const seen = new Set();
   const unique = reservations.filter(r => {
@@ -96,8 +97,8 @@ function buildMenuFromReservations(reservations) {
     return true;
   });
 
-  console.log(reservations)
-  console.log(unique)
+  // console.log(reservations)
+  // console.log(unique)
 
   const reservationSubmenu = unique.map((r, idx) => ({
     id: `reserve-${idx}`,
@@ -128,6 +129,20 @@ function buildMenuFromReservations(reservations) {
     {
       label: '예약',
       submenu: [
+        {
+          id: 'checksAvailability',
+          label: '날짜별 시간 정보 체크하기',
+          type: 'checkbox',
+          checked: config.checksAvailability ? true : false,               // 초기 체크 상태
+          accelerator: 'CmdOrCtrl+Shift+C',  // 단축키(선택)
+          click: (menuItem/*, browserWindow, event*/) => {
+            config.checksAvailability = menuItem.checked;   // 토글 결과
+            // 필요하면 렌더러로 상태 브로드캐스트
+            BrowserWindow.getAllWindows().forEach(w =>
+              w.webContents.send('option:checksAvailability', config.checksAvailability)
+            );
+          }
+        },
         { label: '예약 목록', enabled: false },
         { type: 'separator' },
         ...reservationSubmenu,
@@ -143,7 +158,7 @@ function buildMenuFromReservations(reservations) {
     { role: 'viewMenu' }
   ];
 
-  console.log(template)
+  // console.log(template)
 
 
   const menu = Menu.buildFromTemplate(template);
@@ -196,6 +211,19 @@ ipcMain.handle('navigate', (event, user_id, target) => {
     return
   }
   web_api.navigate(event, target)
+});
+
+ipcMain.handle('timecheck', (event, user_id, success) => {
+  const web_api = webApiMap[user_id]
+  if (!web_api) {
+    console.error(`WebApi not found for ${user_id}`)
+    return
+  }
+  web_api.onTimeCheck(success)
+});
+
+ipcMain.handle('timeboard', (event, opts, data) => {
+  handleTimeboard(opts, data)
 });
 
 ipcMain.handle('settings:save', (event, cfg) => {

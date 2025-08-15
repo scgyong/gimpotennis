@@ -1,4 +1,5 @@
 const scripts = require('./scripts')
+const configLoader = require('./configLoader')
 
 const BASE_URL = 'http://www.gimposports.or.kr'
 const ROOT_URL = `${BASE_URL}/`
@@ -12,7 +13,7 @@ class WebApi {
     start(window, session) {
         this.window = window
         this.session = session
-        console.log('WebApi.start()')
+        console.log(`WebApi.start(${session.user_id})`)
 
         window.webContents.on('did-finish-load', ()=>this.onLoad())
 
@@ -20,10 +21,10 @@ class WebApi {
     }
     onLoad() {
         const currentUrl = this.window.webContents.getURL();
-        console.log("onLoad(): ", currentUrl);
+        // console.log("onLoad(): ", currentUrl);
         if (currentUrl == LOGIN_URL) {
             const script = scripts.login(this.session.user_id, this.session.user_pw)
-            console.log(script)
+            // console.log(script)
             this.window.webContents.executeJavaScript(script)
         } else if (currentUrl == ROOT_URL) {
             this.window.loadURL(MAIN_URL)
@@ -42,11 +43,77 @@ class WebApi {
         }
     }
     onMenuReservation(r) {
+        const config = configLoader.getConfig()
+        if (config.checksAvailability) {
+            if (this.alreadyBooked(r)) {
+                this.showBooked(r)
+                return
+            }
+            this.reservation = r
+            const script = scripts.checkTimeslot(this.session.user_id, r.court, r.date)
+            console.log(script)
+            this.window.webContents.executeJavaScript(script)
+        } else {
+            this.makeReservation(r)
+        }
+    }
+    showBooked(r) {
+        this.window.webContents.executeJavaScript(`alert("Already booked")`)
+    }
+    makeReservation(r) {
+        if (this.alreadyBooked(r)) {
+            this.showBooked(r)
+            return
+        }
         this.window.webContents.executeJavaScript(scripts.hilightDate(r.date))
         const script = scripts.reservation(r)
         console.log(script)
         this.window.webContents.executeJavaScript(script)
     }
+    onTimeCheck(success) {
+        console.log(`onTimeCheck(${success})`)
+        this.makeReservation(this.reservation)
+    }
+    alreadyBooked(r) {
+        const key = `${r.date}_${r.court}`
+        const slots = timetable[key]
+        if (!slots) return false;
+        if (slots[r.time] == 'no') {
+            console.log(`${r.date} ${r.time} Court ${r.court} is blocked`)
+            return true;
+        }
+        if (r.hours > 1) {
+            const hour = Number(r.time.split(/:/)[0])+1
+            const hour_str = hour.toString().padStart(2, '0') + ':00';
+            if (stots[hour_str] == 'no') { 
+                console.log(`${r.date} ${r.time} Court ${r.court} is blocked`)
+                return true;
+            }
+        }
+        return false
+    }
 }
 
-module.exports = { WebApi }
+let timetable = {}
+
+function handleTimeboard(opts, data) {
+    const date = opts.data.orderDate
+    const court = opts.data.sRoom[0].charCodeAt(0) - 'A'.charCodeAt(0) + 1;
+    const slots = {}
+    for (const line of data.split(/\n/)) {
+        const m = line.match(/^\s*<label class="(on|no) labelDate" data="(\d{2}:\d{2})"/)
+        if (!m) continue;
+        slots[m[2]] = m[1]
+    }
+    const key = `${date}_${court}`
+    const timeCount = Object.keys(slots).length
+    if (timeCount > 0) {
+        timetable[key] = slots
+        console.log('timetable add:', {key, count: timeCount})
+    }
+    //console.log('timetable add:', {key})
+
+    //console.log({opts, len:data.length})
+}
+
+module.exports = { WebApi, handleTimeboard }

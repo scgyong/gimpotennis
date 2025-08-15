@@ -19,7 +19,7 @@ class SettingsApi {
         `)
     }
     save(event, cfg) {
-        console.log('cfg:', cfg)
+        // console.log('cfg:', cfg)
         configLoader.saveConfig(cfg)
     }
 }

@@ -1,7 +1,9 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  navigate: (uid, target) => ipcRenderer.invoke('navigate', uid, target)
+  navigate: (uid, target) => ipcRenderer.invoke('navigate', uid, target),
+  onTimeboard: (opts, data) => ipcRenderer.invoke('timeboard', opts, data),
+  onTimeCheck: (uid, success) => ipcRenderer.invoke('timecheck', uid, success),
 });
 // preload.js
 console.log('[preload] loaded');
@@ -12,7 +14,7 @@ const ERROR_PATTERNS = [
   'you have an error in your sql syntax', 'warning:'
 ];
 const ENABLE_LOG = true;
-const CACHE_TTL_MS = 10000; // n=1초
+const CACHE_TTL_MS = 1000; // n=1초
 
 // --- 메인 월드로 주입될 코드(문자열) ---
 const injectPatchCode = `
@@ -148,6 +150,9 @@ const injectPatchCode = `
       options.success = function(data, status, xhr){
         if (typeof data === 'string' && !looksLikeMysqlError(data)) {
           lastGood.set(key, { body: data, status: 200, headersObj: {}, ts: now() });
+          if (url.indexOf('timeBoard4.php') >= 0) {
+            window.electronAPI.onTimeboard({url:options.url, data:options.data}, data)
+          }
         }
         return origSuccess && origSuccess.call(this, data, status, xhr);
       };

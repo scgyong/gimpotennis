@@ -1,98 +1,12 @@
 {
     "groupName": "굿맨",
     "groupCount": 4,
-    "!sessions": [
-        {
-            "user_id": "scgyong",
-            "user_pw": "j9kdzpvndocj5xm/d"
-        }
-    ],
-    "sessions": [
-        {
-            "user_id": "scgyong",
-            "user_pw": "j9kdzpvndocj5xm/d"
-        },
-        {
-            "user_id": "hongchs",
-            "user_pw": "cs19930758!"
-        },
-        {
-            "user_id": "tmddnjs939",
-            "user_pw": "Wlalsgimpo07@"
-        }
-    ],
     "reservations": [
         {
             "court": 1,
             "date": "20250815",
-            "time": "06:00",
-            "hours": 2
-        },
-        {
-            "court": 2,
-            "date": "20250815",
-            "time": "06:00",
-            "hours": 2
-        },
-        {
-            "court": 1,
-            "date": "20250818",
-            "time": "06:00",
-            "hours": 2
-        },
-        {
-            "court": 2,
-            "date": "20250818",
-            "time": "06:00",
-            "hours": 2
-        },
-        {
-            "court": 1,
-            "date": "20250820",
-            "time": "06:00",
-            "hours": 2
-        },
-        {
-            "court": 2,
-            "date": "20250820",
-            "time": "06:00",
-            "hours": 2
-        },
-        {
-            "court": 1,
-            "date": "20250822",
-            "time": "06:00",
-            "hours": 2
-        },
-        {
-            "court": 2,
-            "date": "20250822",
-            "time": "06:00",
-            "hours": 2
-        },
-        {
-            "court": 1,
-            "date": "20250825",
-            "time": "06:00",
-            "hours": 2
-        },
-        {
-            "court": 2,
-            "date": "20250825",
-            "time": "06:00",
-            "hours": 2
-        },
-        {
-            "court": 1,
-            "date": "20250827",
-            "time": "06:00",
-            "hours": 2
-        },
-        {
-            "court": 2,
-            "date": "20250827",
-            "time": "06:00",
-            "hours": 2
+            "time": "14:00",
+            "hours": 1
         },
         {
             "court": 1,
@@ -117,6 +31,14 @@
             "date": "20250830",
             "time": "11:00",
             "hours": 1
+        },
+        {
+            "court": 1,
+            "date": "20250830",
+            "time": "12:00",
+            "hours": 1
         }
-    ]
+    ],
+    "enc_sessions": "djEwnnlVbjVrXGWIMUosPPS8cyRP42AOjfPKQwmBOxQTV5IhzXizve3Idt5l/pIN6jXB+ue6MMPrZJx2WBadWbP45HsuCy3D44yBY2kqqmmBNB/EBhWndEe3vD2FKgLxX4zo3dXz9ame6sxyvP8Qe2hilMHRxJeq+vz14hOE98oDaivaraCrbEytzPLPx8ctlSltP4VJ/N9W+Yhif8z3btLYOA==",
+    "checksAvailability": false
 }

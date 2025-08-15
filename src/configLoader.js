@@ -1,5 +1,9 @@
 const fs = require('fs');
 const path = require('path');
+const { app, safeStorage } = require('electron');
+
+const userConfigPath = path.join(app.getPath('userData'), 'config.json');
+console.log({userConfigPath})
 
 // let config = require('./config.json');
 let config = null
@@ -7,24 +11,35 @@ let config = null
 function getConfig() {
   if (!config) {
     try {
-      config = require('./config.json')
+      if (fs.existsSync(userConfigPath)) {
+        const raw = fs.readFileSync(userConfigPath, 'utf8');
+        config = JSON.parse(raw);
+      }
+    } catch (err) {
+      console.error('❌ 설정 로드 실패:', err);
+    }
 
-      // TODO:
-      // const { app } = require('electron');
-      // const userConfigPath = path.join(app.getPath('userData'), 'config.json');
-
-    } catch {
+    if (!config) {
       config = {
         sessions: [],
         reservations: []
       }
     }
   }
+  if (config.enc_sessions) {
+    const plain = safeStorage.decryptString(Buffer.from(config.enc_sessions, 'base64')); // 복호화
+    // console.log(plain)
+    config.sessions = JSON.parse(plain)
+  }
   if (config.sessions.length == 0) {
     config.sessions = [
       { user_id: 'unknown', user_pw: ''}
     ]
   }
+  if (typeof(config.checksAvailability) == 'undefined') {
+    config.checksAvailability = true
+  }
+
   return config;
 }
 
@@ -42,18 +57,15 @@ function setReloadCallback(cb) {
 }
 
 function saveConfig(cfg) {
-  // TODO:
-  // const { app } = require('electron');
-  // const userConfigPath = path.join(app.getPath('userData'), 'config.json');
-
   config = cfg
+  const { sessions, ...cfgToSave } = cfg; // sessions 제외
 
-  const configPath = path.join(__dirname, 'config.json');
-  console.log(configPath)
-  console.log(config)
+  const sessions_json = JSON.stringify(sessions)
+  const enc_sessions = safeStorage.encryptString(sessions_json).toString('base64');
+  cfgToSave.enc_sessions = enc_sessions
 
   // 저장
-  fs.writeFileSync(configPath, JSON.stringify(config, null, 4), 'utf8');
+  fs.writeFileSync(userConfigPath, JSON.stringify(cfgToSave, null, 4), 'utf8');
 
   if (reloadCallback) {
     reloadCallback()

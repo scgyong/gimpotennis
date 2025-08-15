@@ -28,6 +28,38 @@ class Scripts {
     hilightDate(ymd) {
         return `$('.txt li.on[data="${ymd}"]').addClass('ok')`
     }
+    checkTimeslot(uid, court, ymd) {
+        const names = [
+            '', 'A관', 'B관', 'C관', 'D관', 'E관', 'F관', 'G관', 'H관'
+        ]
+        const sRoom = names[court] ?? names[1]
+        const arg = { sTeb: 'g', orderDate: ymd, sRoom }
+        return `
+            (function(){
+                let tryCount = 5
+                function onSuccess() {
+                    window.electronAPI.onTimeCheck("${uid}", true)
+                }
+                function onError() {
+                    if (tryCount > 0) {
+                        tryCount -= 1
+                        tryAjax()
+                        return
+                    }
+                    window.electronAPI.onTimeCheck("${uid}", false)
+                }
+                function tryAjax() {
+                    $.ajax({
+                        data:${JSON.stringify(arg)},type:'post',
+                        url:'/skin/orders/timeBoard4.php',
+                        success: onSuccess,
+                        error: onError,
+                    })
+                }
+                tryAjax()
+            })()
+        `
+    }
     reservation(r) {
         const config = configLoader.getConfig()
 
