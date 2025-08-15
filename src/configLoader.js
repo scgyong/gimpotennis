@@ -44,8 +44,8 @@ function getConfig() {
 }
 
 function reloadConfig() {
-  delete require.cache[require.resolve('./config.json')];
-  config = require('./config.json');
+  config = null
+  getConfig()
   if (reloadCallback) {
     reloadCallback()
   }
