@@ -51,7 +51,7 @@ class WebApi {
             }
             this.reservation = r
             const script = scripts.checkTimeslot(this.session.user_id, r.court, r.date)
-            console.log(script)
+            //console.log(script)
             this.window.webContents.executeJavaScript(script)
         } else {
             this.makeReservation(r)
@@ -71,7 +71,7 @@ class WebApi {
         this.window.webContents.executeJavaScript(script)
     }
     onTimeCheck(success) {
-        console.log(`onTimeCheck(${success})`)
+        //console.log(`onTimeCheck(${success})`)
         this.makeReservation(this.reservation)
     }
     alreadyBooked(r) {

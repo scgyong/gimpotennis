@@ -29,7 +29,7 @@ function createWindows() {
     const win = new BrowserWindow({
       width: 1280,
       height: 960,
-      icon: path.join(__dirname, 'ui/icon.icns'), // 또는 .ico/.icns
+      icon: path.join(__dirname, 'ui/Parcourse2_Icon.png'), // 또는 .ico/.icns
       webPreferences: {
         partition: sess.user_id,
         preload: path.join(__dirname, 'preload_main.js'),
