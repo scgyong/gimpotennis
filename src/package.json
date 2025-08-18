@@ -10,17 +10,20 @@
     "start": "electron .",
     "dist:win": "electron-builder --win nsis"
   },
-  "dependencies": {
-    "electron": "^37.2.5"
-  },
   "build": {
     "appId": "net.scgyong.courtresv",
     "productName": "GimpoCourtResv",
     "mac": {
-      "icon": "ui/icon.icns"
+      "icon": "assets/icon.icns"
+    },
+    "win": {
+      "icon": "assets/icon.ico"
     }
   },
+  "dependencies": {
+  },
   "devDependencies": {
-    "electron-builder": "^26.0.12"
+    "electron-builder": "^26.0.12",
+    "electron": "^37.2.5"
   }
 }
