@@ -35,6 +35,10 @@ body {
     margin: 0 50px 0 0;
 }
 
+ul.courts, ul.weekdays, ul.dates {
+    margin: 0;
+}
+
 .calendar .courts {
     display: flex;
     flex-wrap: wrap;
@@ -43,7 +47,7 @@ body {
 
 .calendar .courts li {
     width: 12.5%;
-    height: 45px;
+    height: 36px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -83,7 +87,7 @@ body {
     align-items: center;
     position: relative;
     margin: -1px 0 0 -1px;
-    height: 55px;
+    height: 45px;
     border: 1px solid #CCC;
     font-size: 14px;
 }
@@ -98,13 +102,13 @@ body {
 .hours-select-box {
     display: flex;
     border: 1px solid #ddd;
-    padding: 15px;
+    padding: 5px 15px;
 }
 
 .time-select-box {
     border: 1px solid #ddd;
     margin-top: 15px;
-    padding: 15px;
+    padding: 5px 15px;
     display: flex;
     flex-wrap: wrap;
 }
@@ -131,7 +135,7 @@ body {
 
 .hour-item {
     width: 90px;
-    padding: 10px 5px;
+    padding: 2px 5px;
 }
 
 .hour-item label {
@@ -240,19 +244,31 @@ li.ok {
   align-items: center;
 }
 
-.account-id-label {
+.label-for-input {
   display: inline-block;
   flex-shrink: 0;
   text-align: right;
   margin: 0px 5px 0px 20px;
 }
 
-.account-pw-label {
-  display: inline-block;
-  flex-shrink: 0;
-  text-align: right;
-  margin: 0px 5px 0px 20px;
+.others-parent {
+    border: 1px solid #ddd;
+    padding: 15px;
+    display: flex;
+    /*justify-content: center;*/
+    flex-wrap: wrap;
 }
+
+.others-item {
+  border: 1px solid #DDC;
+  border-radius: 8px;
+  margin: 4px 20px;
+  padding: 4px 20px;
+  background: #EEF;
+  display: flex;
+  align-items: center;
+}
+
 
 .dialog-buttons {
   margin: 15px 30px;

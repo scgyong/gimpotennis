@@ -194,6 +194,8 @@ function fillConfig(cfg) {
   config = cfg
   updateReservations()
   updateAccounts()
+  $('#groupName').val(cfg.groupName)
+  $('#groupCount').val(cfg.groupCount)
 }
 function updateReservations() {
   document.querySelector('.menu-parent').innerHTML = config.reservations.map((r, i)=>{
@@ -238,9 +240,9 @@ function updateAccounts() {
     return `
       <div class="account-wrapper">
         <div class="account-item">
-          <label class="account-id-label" for="account_id_${i}">ID:</label>
+          <label class="label-for-input" for="account_id_${i}">ID:</label>
           <input class="form-control" type="text" id="account_id_${i}" size="10" value="${s.user_id}"></input>
-          <label class="account-pw-label" for="account_pw_${i}">Password:</label>
+          <label class="label-for-input" for="account_pw_${i}">Password:</label>
           <input class="form-control" type="password" id="account_pw_${i}" size="15" value="${s.user_pw}"></input>
         </div>
         <div class="account-action">
@@ -288,6 +290,15 @@ function saveSettings() {
     updateAccounts()
     return
   }
+  config.groupName = $('#groupName').val()
+  config.groupCount = Number($('#groupCount').val())
+  if (config.groupName.trim() == '') {
+    config.groupName = 'Tennis'
+  }
+  if (!config.groupCount || config.groupCount < 1 || config.groupCount > 4) {
+    config.groupCount = 4
+  }
+
   window.settingsAPI.save(config)
   window.close()
 }

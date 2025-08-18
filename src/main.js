@@ -29,7 +29,7 @@ function createWindows() {
     const win = new BrowserWindow({
       width: 1280,
       height: 960,
-      icon: path.join(__dirname, 'ui/Parcourse2_Icon.png'), // 또는 .ico/.icns
+      icon: path.join(__dirname, 'ui/icon.icns'),
       webPreferences: {
         partition: sess.user_id,
         preload: path.join(__dirname, 'preload_main.js'),
@@ -154,8 +154,8 @@ function buildMenuFromReservations(config) {
         }
       ]
     },
-    { role: 'editMenu' },
-    { role: 'viewMenu' }
+    // { role: 'editMenu' },
+    { role: 'windowMenu' }
   ];
 
   // console.log(template)
@@ -175,10 +175,13 @@ function showSettings(parentWin) {
     return;
   }
 
+  const bounds = parentWin.getBounds()
+  // console.log(bounds)
+
   // 새로 만들기 (parent를 주면 모달처럼 UX 가능)
   settingsWindow = new BrowserWindow({
     width: 930,
-    height: 900,
+    height: bounds.height - 60,
     resizable: false,
     minimizable: false,
     maximizable: false,

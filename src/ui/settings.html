@@ -24,7 +24,7 @@
             <li class="court" data-court="8">8코트</li>
         </ul>
         <div class="head">
-          <p id="year_month"></p>
+          <div id="year_month"></div>
         </div>
         <ul class="weekdays">
             <li class="weekday" data-week="0">일</li>
@@ -64,6 +64,15 @@
         <button class="btn btn-sm btn-outline-primary" onclick="addAccount()">➕ Add Account</button>
       </div>
       <div class="account-parent"></div>
+      <div class="item-title">Other Settings</div>
+      <div class="others-parent">
+        <div class="others-item">
+          <label for="group_name" class="label-for-input">그룹명:</label>
+          <input type="text" class="form-control" id="groupName"></input>
+          <label for="group_count" class="label-for-input">인원수:</label>
+          <input type="number" class="form-control" id="groupCount" min="1" max="4"></input>
+        </div>
+      </div>
     </div>
     <div class="dialog-buttons">
       <button class="btn btn-success" onclick="saveSettings()">Save Settings and Close</button>

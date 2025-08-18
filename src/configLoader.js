@@ -21,6 +21,8 @@ function getConfig() {
 
     if (!config) {
       config = {
+        groupName: "Tennis",
+        groupCount: 4,
         sessions: [],
         reservations: []
       }

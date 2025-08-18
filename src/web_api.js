@@ -82,10 +82,11 @@ class WebApi {
             console.log(`${r.date} ${r.time} Court ${r.court} is blocked`)
             return true;
         }
+        console.log('in alreadyBooked(),', {slots, t:typeof(slots)})
         if (r.hours > 1) {
             const hour = Number(r.time.split(/:/)[0])+1
             const hour_str = hour.toString().padStart(2, '0') + ':00';
-            if (stots[hour_str] == 'no') { 
+            if (slots[hour_str] == 'no') { 
                 console.log(`${r.date} ${r.time} Court ${r.court} is blocked`)
                 return true;
             }
