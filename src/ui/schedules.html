@@ -1,0 +1,39 @@
+<html>
+  <head>
+    <link href="lib/bootstrap.min.css" rel="stylesheet">
+    <link href="schedules.css" rel="stylesheet">
+    <script src="lib/jquery-3.7.1.min.js" ></script>
+    <script src="schedules.js"></script>
+  </head>
+  <body onload="onLoad()">
+    <div class="titlebar">
+      <p>&nbsp;</p>
+      <h1>Schedules</h1>
+      <button type="button" class="btn-close" aria-label="Close" onclick="window.close()"></button>
+    </div>
+    <div class="cal-parent">
+      <div class="schedule">
+        <ul class="courts">
+            <li class="hour" data-court="0"></li>
+            <li class="hour" data-court="1">1코트</li>
+            <li class="hour" data-court="2">2코트</li>
+            <li class="hour" data-court="3">3코트</li>
+            <li class="hour" data-court="4">4코트</li>
+            <li class="hour" data-court="5">5코트</li>
+            <li class="hour" data-court="6">6코트</li>
+            <li class="hour" data-court="7">7코트</li>
+            <li class="hour" data-court="8">8코트</li>
+        </ul>
+      </div>
+    </div>
+    <div class="date-band">
+      <div class="update-time"></div>
+      <div class="date-part">
+        <button class="btn btn-outline-info" id="date_prev">&lt;</button>
+        <span id="date"></span>
+        <button class="btn btn-outline-info" id="date_next">&gt;</button>
+      </div>
+      <button class="btn btn-outline-success" id="date_refresh">🔄 Reload</button>
+    </div>
+  </body>
+</html>

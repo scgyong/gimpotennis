@@ -1,5 +1,5 @@
 // main.js
-const { app, BrowserWindow, Menu, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, session } = require('electron');
 const path = require('path');
 const { WebApi, handleTimeboard } = require('./web_api')
 const { SettingsApi } = require('./settings_api')
@@ -68,9 +68,36 @@ function createWindows() {
       event.preventDefault(); // 자동 title 변경 막기
     });
     win.setTitle(sess.user_id)
+
+    win.webContents.on('will-prevent-unload', (event) => {
+      console.log('[will-prevent-unload] forcing unload');
+      event.preventDefault(); // ✅ 확인 대화 없이 나가기/리로드 허용
+    });
+
   }
 
   buildMenuFromReservations(config)
+
+  session.defaultSession.webRequest.onBeforeRequest((details, cb) => {
+    if (['mainFrame','xhr'].includes(details.resourceType)) {
+      console.log('[REQ]', details.method, details.url);
+    }
+    cb({});
+  });
+  session.defaultSession.webRequest.onCompleted((details) => {
+    if (['mainFrame','xhr'].includes(details.resourceType)) {
+      console.log('[RES]', details.statusCode, details.method, details.url);
+    }
+  });
+
+}
+
+function reloadFocusedIgnoringCache() {
+  const win = BrowserWindow.getFocusedWindow();
+  if (win) {
+    console.log('reloading:', win.getTitle())
+    win.webContents.reloadIgnoringCache();
+  }
 }
 
 function fmtDate(yyyymmdd) {
@@ -148,13 +175,23 @@ function buildMenuFromReservations(config) {
         ...reservationSubmenu,
         { type: 'separator' },
         {
+            label: 'Schedules',
+            accelerator: 'CmdOrCtrl+S',
+            click: () => showSchedules()
+        },
+        {
             label: '환경설정…',
             accelerator: 'CmdOrCtrl+,',
             click: () => showSettings(BrowserWindow.getFocusedWindow())
-        }
+        },
+        // { type: 'separator' },
+        // { label: 'Reload', accelerator: 'CmdOrCtrl+R', click: reloadFocusedIgnoringCache },
+        // { label: 'Force Reload', accelerator: 'Shift+CmdOrCtrl+R', click: reloadFocusedIgnoringCache },
       ]
     },
     // { role: 'editMenu' },
+        { role: 'viewMenu' },
+
     { role: 'windowMenu' }
   ];
 
@@ -163,6 +200,36 @@ function buildMenuFromReservations(config) {
 
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
+}
+
+let schedulesWindow; // Singleton
+function showSchedules() {
+  // 이미 열려 있으면 앞으로
+  if (schedulesWindow && !schedulesWindow.isDestroyed()) {
+    if (!schedulesWindow.isVisible()) schedulesWindow.show();
+    schedulesWindow.focus();
+    return;
+  }
+  schedulesWindow = new BrowserWindow({
+    width: 640,
+    height: 860,
+    resizable: true,
+    minimizable: false,
+    maximizable: false,
+    title: 'Schedules',
+    parent: BrowserWindow.getFocusedWindow() || undefined,
+    modal: false, // true로 하면 모달 동작
+    autoHideMenuBar: false,
+    webPreferences: {
+      contextIsolation: true,
+    }
+  });
+
+  schedulesWindow.loadFile(path.join(__dirname, 'ui/schedules.html'));
+
+  schedulesWindow.on('closed', () => {
+    schedulesWindow = null; 
+  });
 }
 
 let settingsWindow; // 싱글턴
@@ -236,3 +303,4 @@ ipcMain.handle('settings:save', (event, cfg) => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
+

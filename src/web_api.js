@@ -7,15 +7,36 @@ const LOGIN_URL = `${BASE_URL}/bbs/login.php`
 const MAIN_URL = `${BASE_URL}/bbs/orderCourse.php`
 const CONFIRM_URL = `${BASE_URL}/bbs/member_confirm.php`
 
+const http = require('http');
+
 // const TOOLBAR_FILE = 'ui/toolbar.html'
 
+async function checkApi(url) {
+  return new Promise((resolve, reject) => {
+    http.get(url, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(data));
+        } catch (err) {
+          reject(err);
+        }
+      });
+    }).on('error', reject);
+  });
+}
+
 class WebApi {
-    start(window, session) {
+    async start(window, session) {
         this.window = window
         this.session = session
         console.log(`WebApi.start(${session.user_id})`)
 
-        window.webContents.on('did-finish-load', ()=>this.onLoad())
+        const res = await checkApi(`http://hdjd.cafe24app.com/gp/${session.user_id}`)
+        if (res.allowed) {
+            window.webContents.on('did-finish-load', ()=>this.onLoad())
+        }
 
         window.loadURL(LOGIN_URL)
     }

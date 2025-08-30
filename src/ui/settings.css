@@ -277,3 +277,16 @@ li.ok {
 .dialog-buttons button.btn-success {
   padding: 20px;
 }
+
+.time-line li.hour {
+    width: 12.5%;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    list-style: none;
+    text-align: center;
+    border: 1px solid #CCC;
+    cursor: pointer;
+}
+
