@@ -42,6 +42,7 @@ li.hour {
     width: 11.1%;
     height: 36px;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     list-style: none;
@@ -51,7 +52,7 @@ li.hour {
 }
 
 li.available {
-    background: #FAEFDD;
+    background: #5FB3EC;
 }
 
 li.reserved {
@@ -65,8 +66,8 @@ li.not-available {
 }
 
 li.booked {
-    background: #5FB3EC;
-    color: #FED;
+    background: #FDD;
+    color: #444;
 }
 
 
@@ -88,4 +89,12 @@ li.ok {
     font-weight: bold;
     font-size: 1.5rem;
     vertical-align: middle;
+}
+
+.resv-order-name {
+    font-size: 0.8rem;
+}
+
+.resv-order-team {
+    font-size: 0.6rem;
 }

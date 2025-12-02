@@ -21,9 +21,10 @@
     }
   },
   "dependencies": {
+    "sortablejs": "^1.15.6"
   },
   "devDependencies": {
-    "electron-builder": "^26.0.12",
-    "electron": "^37.2.5"
+    "electron": "^37.2.5",
+    "electron-builder": "^26.0.12"
   }
 }

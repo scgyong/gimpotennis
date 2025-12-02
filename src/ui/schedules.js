@@ -8,6 +8,8 @@ async function onLoad() {
     await loadDate(currentDate)
 }
 
+const HANJA_WEEKDAYS = "日月火水木金土";
+
 let currentDate = null
 const schedules = {}
 
@@ -19,8 +21,9 @@ async function loadDate(date, dayDiff, forced) {
     const yy = date.getFullYear()
     const mm = (date.getMonth() + 1).toString().padStart(2, '0')
     const dd = date.getDate().toString().padStart(2, '0')
+    const wd = HANJA_WEEKDAYS.charAt(date.getDay())
 
-    $('#date').html(yy+'.'+mm+'.'+dd)
+    $('#date').html(`${yy}.${mm}.${dd}(${wd})`)
 
     const ymd = yy+mm+dd
     const existing = schedules[ymd]
@@ -46,17 +49,36 @@ const hour_classes = [
     'available', 'reserved', 'not-available', 'booked',
 ]
 
+function maskName(str) {
+    if (!str) return "";
+
+    const len = str.length;
+    if (len <= 2) {
+        return str[0] + "*";
+    }
+    return str[0] + "*".repeat(len - 2) + str[len - 1];
+}
 function updateSchedule(ymd) {
     const sched = schedules[ymd]
     for (let court = 1; court <= 8; court += 1) {
         const slots = sched.data[court]
         for (let hour = 6; hour <= 23; hour += 1) {
             const hour_str = hour.toString().padStart(2, '0') + ':00';
-            const value = slots[hour_str]
             const court_hour = court * 100 + hour
             const $hid = $(`#h_${court_hour}`)
             hour_classes.forEach((cl)=>{ $hid.removeClass(cl) })
-            $hid.addClass(hour_classes[value])
+            const value = slots[hour_str]
+            if (Array.isArray(value) && value.length >= 2) {
+                const [name, team] = value
+                $hid.html(`
+                    <div class="resv-order-name">${maskName(name)}</div>
+                    <div class="resv-order-team">${team}</div>
+                `)
+                $hid.addClass('booked')
+            } else {
+                $hid.html(hour_str)
+                $hid.addClass(hour_classes[value])
+            }
         }
     }
 

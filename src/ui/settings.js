@@ -1,3 +1,6 @@
+window.onLoad = onLoad
+window.fillConfig = fillConfig
+
 function getThisWeekSunday() {
   const today = new Date();
   const day = today.getDay(); // 0 (일요일) ~ 6 (토요일)
@@ -303,6 +306,7 @@ function saveSettings() {
   window.close()
 }
 function onLoad() {
+  console.log('kkkk')
   makeCalendar()
   makeHours()
 
