@@ -1,12 +1,13 @@
 const scripts = require('./scripts')
 const configLoader = require('./configLoader')
+const scenario = require('./scenario')
 
 const BASE_URL = 'http://www.gimposports.or.kr'
 const ROOT_URL = `${BASE_URL}/`
 const LOGIN_URL = `${BASE_URL}/bbs/login.php`
 const MAIN_URL = `${BASE_URL}/bbs/orderCourse.php`
 const CONFIRM_URL = `${BASE_URL}/bbs/member_confirm.php`
-
+const ORDER_ACTION = `${BASE_URL}/skin/orders/orderAction.php`
 const http = require('http');
 
 // const TOOLBAR_FILE = 'ui/toolbar.html'
@@ -31,18 +32,25 @@ class WebApi {
     async start(window, session) {
         this.window = window
         this.session = session
+        this.paymentWin = null
         console.log(`WebApi.start(${session.user_id})`)
 
+        const this_webApi = this
         const res = await checkApi(`http://hdjd.cafe24app.com/gp/${session.user_id}`)
         if (res.allowed) {
             window.webContents.on('did-finish-load', ()=>this.onLoad())
+            window.webContents.on('did-start-navigation', async (e, url, isInPlace, isMainFrame) => {
+                if (!isMainFrame) return;
+                this_webApi.prevUrl = this_webApi.currentUrl
+                this_webApi.currentUrl = url
+            })
         }
 
         window.loadURL(LOGIN_URL)
     }
     onLoad() {
         const currentUrl = this.window.webContents.getURL();
-        // console.log("onLoad(): ", currentUrl);
+        console.log("onLoad(): ", currentUrl);
         if (currentUrl == LOGIN_URL) {
             const script = scripts.login(this.session.user_id, this.session.user_pw)
             // console.log(script)
@@ -52,7 +60,24 @@ class WebApi {
         } else if (currentUrl.startsWith(CONFIRM_URL)) {
             this.window.webContents.executeJavaScript(scripts.confirm(this.session.user_pw))
         } else if (currentUrl == MAIN_URL) {
+            console.log('prevUrl:', this.prevUrl)
             this.window.webContents.executeJavaScript(scripts.showCalendar())
+            // if (this.prevUrl.indexOf('/orderAction.php') >= 0) {
+                this.updateBookedState()
+            // }
+        } else if (currentUrl == ORDER_ACTION) {
+            this.closePaymentWindow()
+            scenario.next()
+        }
+    }
+    setPaymentWindow(pwin) {
+        this.closePaymentWindow()
+        this.paymentWin = pwin
+    }
+    closePaymentWindow() {
+        if (this.paymentWin) {
+            this.paymentWin.close()
+            this.paymentWin = null
         }
     }
     navigate(event, target) {
@@ -88,8 +113,26 @@ class WebApi {
         }
         this.window.webContents.executeJavaScript(scripts.hilightDate(r.date))
         const script = scripts.reservation(r)
-        console.log(script)
+        console.log(script, r)
+        this.reservationData = r
         this.window.webContents.executeJavaScript(script)
+    }
+    async updateBookedState() {
+        if (!this.reservationData) {
+            console.log('No reservation Data on updateBookedState()')
+            return
+        }
+        // console.log(this.reservationData)
+        const ymd = this.reservationData.date
+        const script = scripts.dateTimeslot(ymd)
+        const result = await this.window.webContents.executeJavaScript(script)
+        const court_sched = result[this.reservationData.court]
+        const resv = court_sched[this.reservationData.time]
+        // console.log(court_sched, resv)
+        if (Array.isArray(resv)) {
+            const name = resv[0]
+            configLoader.markReserved(this.reservationData, name)
+        }
     }
     onTimeCheck(success) {
         //console.log(`onTimeCheck(${success})`)

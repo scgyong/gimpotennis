@@ -118,6 +118,18 @@ class Scripts {
             //     reservWriteFunc()
             // `
     }
+    dateTimeslot(ymd) {
+        return `
+            (async ()=>{
+                return await $.ajax({
+                    url: 'http://www.gimposports.or.kr/skin/orders/timeSlots.php',
+                    type: 'POST',
+                    data: { orderDate: '${ymd}' },
+                    dataType: 'json',
+                })
+            })()
+        `
+    }
     openReservationWindow() {
         //reservWriteFunc()
     }

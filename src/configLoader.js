@@ -74,4 +74,24 @@ function saveConfig(cfg) {
   }
 }
 
-module.exports = { getConfig, reloadConfig, saveConfig, setReloadCallback };
+let marked = {}
+
+function markReserved(r, name) {
+  const key = `${r.court},${r.date},${r.time}`
+  marked[key] = name
+  console.log({key, name})
+
+  if (reloadCallback) {
+    reloadCallback()
+  }
+}
+
+function markedName(r) {
+  const key = `${r.court},${r.date},${r.time}`
+  return marked[key] ?? ''  
+}
+
+module.exports = { 
+  getConfig, reloadConfig, saveConfig, setReloadCallback,
+  markReserved, markedName,
+};

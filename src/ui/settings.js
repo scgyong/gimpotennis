@@ -1,5 +1,16 @@
+import { reservationItemToString } from '../common/menu_time_esm.js'
+
 window.onLoad = onLoad
 window.fillConfig = fillConfig
+window.addToMenu = addToMenu
+window.addAccount = addAccount
+window.saveSettings = saveSettings
+window.editReservationAt = editReservationAt
+window.removeReservationAt = removeReservationAt
+window.removeAccountAt = removeAccountAt
+window.onAccountItem = onAccountItem
+
+import Sortable from './lib/sortable.esm.js'
 
 function getThisWeekSunday() {
   const today = new Date();
@@ -121,18 +132,6 @@ function hilightHours() {
     $(`#hour_item_${hour+1}`).addClass('ok')
   }
 }
-function fmtDate(yyyymmdd) {
-  const year = yyyymmdd.slice(0, 4);
-  const month = yyyymmdd.slice(4, 6);
-  const day = yyyymmdd.slice(6, 8);
-
-  const date = new Date(`${year}-${month}-${day}`);
-
-  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-  const weekday = weekdays[date.getDay()];
-
-  return `${year}-${month}-${day}(${weekday})`;
-}
 let tempOutput = []
 function updateTempOutput() {
   tempOutput = []
@@ -141,7 +140,7 @@ function updateTempOutput() {
   const $hours = $('input.hours-radio[type="radio"]:checked')
   let hours = Number($hours.val())
   const $start = $('.hour-item.ok input')
-  const start = $start.val()
+  const start = Number($start.val())
   if (!court || !hours || !start) {
     return
   }
@@ -151,6 +150,7 @@ function updateTempOutput() {
     tempOutput.push({
       court,
       date: String(date),
+      start: start,
       time: start.toString().padStart(2, '0') + ':00',
       hours,
     })
@@ -161,44 +161,63 @@ function updateTempOutput() {
   }).join('\n')
 }
 function addToMenu() {
-  config.reservations = [...config.reservations, ...tempOutput]
+  const $account = $('.account-item.active')
+  const accountIndex = Number($account.attr('id').match(/\d+/)[0])
+  const user_id = config.sessions[accountIndex].user_id
+
+  const added = tempOutput.map(r=>{return {...r, user_id}})
+  let reservations = [...config.reservations, ...added]
+
+  console.log(reservations)
 
   // 중복 제거: date + time + court 기준
   const seen = new Set();
-  config.reservations = config.reservations.filter(item => {
+  reservations = reservations.filter(item => {
     const key = `${item.date}-${item.time}-${item.court}`;
+    console.log(key, seen)
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
 
-  config.reservations.sort((a,b)=>{
-    // 날짜(date)가 다르면 문자열 기준으로 정렬 (오름차순)
-    if (a.date !== b.date) {
-      return a.date.localeCompare(b.date);
-    }
+  console.log(reservations)
 
-    // 날짜가 같고 시간(time)이 다르면 시간 기준 정렬
-    if (a.time !== b.time) {
-      return a.time.localeCompare(b.time);
+  const hours = {}
+  for (const item of reservations) {
+    if (!item.user_id) continue;
+    const key = `${item.user_id}-${item.date}`
+    if (!hours[key]) hours[key] = 0;
+    hours[key] += item.hours
+    if (hours[key] > 2) {
+      const msg = `${hours[key]} hours for ${item.user_id}`
+      alert(msg)
+      return
     }
+  }
 
-    // 날짜와 시간이 같으면 코트 번호(court) 기준 정렬 (숫자 오름차순)
-    return a.court - b.court;
-  })
+  config.reservations = reservations
 
   updateReservations()
-}
-function reservationItemToString(r) {
-  return `${fmtDate(r.date)} • 코트 ${r.court} • ${r.time} • ${r.hours}시간`
 }
 let config = null
 function fillConfig(cfg) {
   config = cfg
+  removePastReservations()
   updateReservations()
   updateAccounts()
   $('#groupName').val(cfg.groupName)
   $('#groupCount').val(cfg.groupCount)
+}
+function removePastReservations() {
+  const now = new Date()
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const day = now.getDate();
+  const now_ymd = year * 10000 + month * 100 + day
+  config.reservations = config.reservations.filter(item => {
+    console.log(item.date, Number(item.date) >= now_ymd)
+    return Number(item.date) >= now_ymd
+  });
 }
 function updateReservations() {
   document.querySelector('.menu-parent').innerHTML = config.reservations.map((r, i)=>{
@@ -238,11 +257,16 @@ function removeReservationAt(i) {
   }
   updateReservations()  
 }
+function onAccountItem(index) {
+  $('.account-item.active').removeClass('active')
+  $(`#account_item_${index}`).addClass('active')
+}
 function updateAccounts() {
   document.querySelector('.account-parent').innerHTML = config.sessions.map((s, i)=>{
+    const active = i == 0 ? ' active' : ''
     return `
       <div class="account-wrapper">
-        <div class="account-item">
+        <div class="account-item${active}" id="account_item_${i}" onclick="onAccountItem(${i})">
           <label class="label-for-input" for="account_id_${i}">ID:</label>
           <input class="form-control" type="text" id="account_id_${i}" size="10" value="${s.user_id}"></input>
           <label class="label-for-input" for="account_pw_${i}">Password:</label>
@@ -306,7 +330,6 @@ function saveSettings() {
   window.close()
 }
 function onLoad() {
-  console.log('kkkk')
   makeCalendar()
   makeHours()
 
@@ -351,6 +374,22 @@ function onLoad() {
     hilightHours()
     updateTempOutput()
   })
+  new Sortable(
+    document.querySelector('.menu-parent'),
+    { 
+      animation: 150,
+      onEnd(evt) {
+        const oldIndex = evt.oldIndex;
+        const newIndex = evt.newIndex;
+
+        // 배열 재정렬 (핵심)
+        const moved = config.reservations.splice(oldIndex, 1)[0];
+        config.reservations.splice(newIndex, 0, moved);
+
+        //console.log("새 reservations:", reservations);
+      }
+    }
+  )
   fillConfig({
       "groupName": "굿맨",
       "groupCount": 4,

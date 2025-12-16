@@ -4,6 +4,8 @@ const path = require('path');
 const { WebApi, handleTimeboard } = require('./web_api')
 const { SettingsApi } = require('./settings_api')
 const configLoader = require('./configLoader')
+const menu_time = require('./common/menu_time.js')
+const scenario = require('./scenario')
 
 let webApiMap = {};
 function getWebApiFromWindow(win) {
@@ -55,6 +57,8 @@ function createWindows() {
       });
 
       paymentWin.loadURL(url);
+      const web_api = getWebApiFromWindow(win)
+      web_api.setPaymentWindow(paymentWin)
       
       return { action: 'allow' }; // 원래 브라우저 새 창은 막음
     });
@@ -73,7 +77,6 @@ function createWindows() {
       console.log('[will-prevent-unload] forcing unload');
       event.preventDefault(); // ✅ 확인 대화 없이 나가기/리로드 허용
     });
-
   }
 
   buildMenuFromReservations(config)
@@ -100,18 +103,18 @@ function reloadFocusedIgnoringCache() {
   }
 }
 
-function fmtDate(yyyymmdd) {
-  const year = yyyymmdd.slice(0, 4);
-  const month = yyyymmdd.slice(4, 6);
-  const day = yyyymmdd.slice(6, 8);
+// function fmtDate(yyyymmdd) {
+//   const year = yyyymmdd.slice(0, 4);
+//   const month = yyyymmdd.slice(4, 6);
+//   const day = yyyymmdd.slice(6, 8);
 
-  const date = new Date(`${year}-${month}-${day}`);
+//   const date = new Date(`${year}-${month}-${day}`);
 
-  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-  const weekday = weekdays[date.getDay()];
+//   const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+//   const weekday = weekdays[date.getDay()];
 
-  return `${year}-${month}-${day}(${weekday})`;
-}
+//   return `${year}-${month}-${day}(${weekday})`;
+// }
 
 function buildMenuFromReservations(config) {
   const reservations = config.reservations
@@ -127,21 +130,44 @@ function buildMenuFromReservations(config) {
   // console.log(reservations)
   // console.log(unique)
 
+  function menuLabel(r) {
+    let label = menu_time.reservationItemToString(r)
+    const name = configLoader.markedName(r)
+    // console.log({label, name})
+    if (name) {
+      label += ` - ${name}`
+    }
+    return label
+  }
+
   const reservationSubmenu = unique.map((r, idx) => ({
     id: `reserve-${idx}`,
-    label: `${fmtDate(r.date)} • 코트 ${r.court} • ${r.time} • ${r.hours}시간`,
+    label: menuLabel(r),
     click: () => {
-      // 메인 윈도우로 선택 이벤트 전달 (렌더러/프리로드에서 받아 처리)
-      const win = BrowserWindow.getFocusedWindow();
-      if (!win) {
-        console.log('No focused Window')
-        return
+      let web_api = webApiMap[r.user_id]
+      let win = web_api ? web_api.window : null
+      if (win) {
+        // ID 가 정해진 윈도우로 선택 이벤트 전달 (렌더러/프리로드에서 받아 처리)
+      } else {
+        // 메인 윈도우로 선택 이벤트 전달 (렌더러/프리로드에서 받아 처리)
+        const win = BrowserWindow.getFocusedWindow();
+        if (!win) {
+          console.log('No focused Window')
+          return
+        }
       }
-      const web_api = getWebApiFromWindow(win)
       if (!web_api) {
-        console.log('No associated web_api')
-        return
+        web_api = getWebApiFromWindow(win)
+        if (!web_api) {
+          console.log('No associated web_api')
+          return
+        }
       }
+      if (win.isMinimized()) {
+        win.restore()
+      }
+      win.show()
+      win.focus()
       web_api.onMenuReservation(r)
     }
   }));
@@ -170,6 +196,19 @@ function buildMenuFromReservations(config) {
             );
           }
         },
+        {
+          label: '시나리오 스텝',
+          accelerator: 'CmdOrCtrl+A',
+          click: () => {
+            scenario.next()
+          }
+        },
+        // {
+        //   id: 'scenarioStatus',
+        //   label: '시나리오: 중지',
+        //   enabled: false,
+        // },
+        // { type: 'separator' },
         { label: '예약 목록', enabled: false },
         { type: 'separator' },
         ...reservationSubmenu,
@@ -298,6 +337,24 @@ ipcMain.handle('timeboard', (event, opts, data) => {
 
 ipcMain.handle('settings:save', (event, cfg) => {
   settings_api.save(event, cfg)
+});
+
+ipcMain.handle('order-alert', (event, info) => {
+  const { url, message } = info;
+  console.log('[order-alert]', url, message);
+
+  // orderAction.php 에서 온 alert만 관심 있음
+  if (url.includes('orderAction.php')) {
+    if (message.includes('이미예약된 데이터')) {
+      console.log('❌ 중복 예약');
+      // 여기서 paymentWin 닫기, 로그 남기기 등 하고 싶은 처리
+    } else if (message.includes('예약이 완료되었습니다')) {
+      console.log('✅ 예약 성공');
+      // 성공 처리
+    } else {
+      console.log('(기타 alert)', message);
+    }
+  }
 });
 
 app.on('window-all-closed', () => {

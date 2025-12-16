@@ -242,6 +242,11 @@ li.ok {
   background: #EEF;
   display: flex;
   align-items: center;
+  cursor: pointer;
+}
+
+.account-item.active {
+  border: 2px solid #339;
 }
 
 .label-for-input {
@@ -288,5 +293,17 @@ li.ok {
     text-align: center;
     border: 1px solid #CCC;
     cursor: pointer;
+}
+
+.court-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4em;
+  height: 1.4em;
+  border: 1px solid #333;   /* 네모 테두리 */
+  border-radius: 4px;       /* 0으로 하면 완전 네모 */
+  font-weight: 600;
+  margin-right: 4px;
 }
 
