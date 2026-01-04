@@ -138,6 +138,16 @@ ul.courts, ul.weekdays, ul.dates {
     padding: 2px 5px;
 }
 
+.hour-item.occupied {
+    background: #FDD;
+    color: #AAA;
+}
+
+.hour-item.blocked {
+    background: #EEE;
+    color: #AAA;
+}
+
 .hour-item label {
     cursor: pointer;
 }

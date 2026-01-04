@@ -54,6 +54,10 @@ li.hour {
 li.available {
     background: #5FB3EC;
 }
+li.available.selected {
+    background: #77ff77;
+    font-weight: bold;
+}
 
 li.reserved {
     background: #EEE;

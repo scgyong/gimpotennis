@@ -144,6 +144,7 @@ function buildMenuFromReservations(config) {
     id: `reserve-${idx}`,
     label: menuLabel(r),
     click: () => {
+      scenario.setIndex(idx)
       let web_api = webApiMap[r.user_id]
       let win = web_api ? web_api.window : null
       if (win) {
@@ -228,6 +229,21 @@ function buildMenuFromReservations(config) {
         // { label: 'Force Reload', accelerator: 'Shift+CmdOrCtrl+R', click: reloadFocusedIgnoringCache },
       ]
     },
+    {
+      label: 'Navigate',
+      submenu: [
+        {
+          label: 'Main',
+          accelerator: 'CmdOrCtrl+M',
+          click: () => goToPage('window')
+        },
+        {
+          label: 'Orders',
+          accelerator: 'CmdOrCtrl+O',
+          click: () => goToPage('orders')
+        },
+      ]
+    },
     // { role: 'editMenu' },
         { role: 'viewMenu' },
 
@@ -239,6 +255,16 @@ function buildMenuFromReservations(config) {
 
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
+}
+
+function goToPage(title) {
+  const win = BrowserWindow.getFocusedWindow();
+  console.log({win})
+  if (!win) return;
+  const web_api = getWebApiFromWindow(win)
+  console.log({web_api})
+  if (!web_api) return;
+  web_api.navigate(null, title)
 }
 
 let schedulesWindow; // Singleton
@@ -261,6 +287,7 @@ function showSchedules() {
     autoHideMenuBar: false,
     webPreferences: {
       contextIsolation: true,
+      preload: path.join(__dirname, 'preload_schedules.js'),
     }
   });
 
@@ -338,6 +365,14 @@ ipcMain.handle('timeboard', (event, opts, data) => {
 ipcMain.handle('settings:save', (event, cfg) => {
   settings_api.save(event, cfg)
 });
+
+ipcMain.handle('schedules:reservation', (event, arg) => {
+  const web_api = getWebApiFromWindow(schedulesWindow.getParentWindow())
+  console.log(web_api)
+  schedulesWindow.close()
+  schedulesWindow = null
+  web_api.onMenuReservation(arg)
+})
 
 ipcMain.handle('order-alert', (event, info) => {
   const { url, message } = info;

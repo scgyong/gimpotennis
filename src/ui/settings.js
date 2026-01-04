@@ -329,6 +329,44 @@ function saveSettings() {
   window.settingsAPI.save(config)
   window.close()
 }
+const schedules = {}
+let recent_date = null
+async function updateTimeTable(date = null) {
+  if (!date) date = recent_date;
+  if (!date) {
+    console.log('no date in updateTimeTable()')
+    return
+  }
+  recent_date = date
+  let sched = schedules[date]
+  if (!sched) {
+    const res = await $.ajax({
+        url: 'http://www.gimposports.or.kr/skin/orders/timeSlots.php',
+        type: 'POST',
+        data: { orderDate: date },
+        dataType: 'json',
+    })
+    sched = { time: new Date(), data: res }
+    schedules[date] = sched
+  }
+  const court = $('li.court.ok').data().court
+  const court_sched = sched.data[court]
+  for (let hour = 6; hour <= 23; hour++) {
+    const hour_str = hour.toString().padStart(2, '0') + ':00';
+    const stat = court_sched[hour_str]
+    const $hour_item = $(`#hour_item_${hour}`)
+    $hour_item.removeClass('available occupied blocked')
+    let clazz = ''
+    if (Array.isArray(stat)) {
+      clazz = 'occupied'
+    } else if (stat == 1) {
+      clazz = 'blocked'
+    } else {
+      clazz = 'available'
+    }
+    $hour_item.addClass(clazz)
+  }
+}
 function onLoad() {
   makeCalendar()
   makeHours()
@@ -341,6 +379,7 @@ function onLoad() {
     const court = $target.data().court
     $('li.court.ok').removeClass('ok')
     $target.addClass('ok')
+    updateTimeTable()
     updateTempOutput()
   })
   $('li.weekday').click((e)=>{
@@ -364,6 +403,7 @@ function onLoad() {
       }
     }
     $target.addClass('ok')
+    updateTimeTable($target.data().date)
     updateTempOutput()
   })
   $('input.hours-radio').click((e)=>{

@@ -4,6 +4,8 @@ async function onLoad() {
     $('#date_refresh').click(()=>{loadDate(currentDate, 0, true)})
     fillHours()
 
+    $('.hour').click(onAvailableCell)
+
     currentDate = new Date()
     await loadDate(currentDate)
 }
@@ -12,6 +14,54 @@ const HANJA_WEEKDAYS = "日月火水木金土";
 
 let currentDate = null
 const schedules = {}
+
+async function onAvailableCell(e) {
+    const $cell = $(e.currentTarget)
+
+    if (!$cell.hasClass('available')) {
+        $('.hour.selected').removeClass('selected')
+        return
+    }
+    if ($cell.hasClass('selected')) {
+        makeReservation()
+        return
+    }
+    const { court, hour } = court_and_hour_from_cell($cell)
+    const $selected_hour_cell = $('.hour.available.selected')
+    if ($selected_hour_cell.length == 1) {
+        const prev = court_and_hour_from_cell($selected_hour_cell.eq(0))
+        const sameCourt = prev.court == court
+        const oneHourDiff = Math.abs(prev.hour - hour) == 1
+        if (sameCourt && oneHourDiff) {
+            $cell.addClass('selected')
+            return
+        }
+    }
+    $selected_hour_cell.removeClass('selected')
+    $cell.addClass('selected')
+}
+
+function court_and_hour_from_cell($cell) {
+    const num = Number($cell.attr('id').split('_')[1])
+    const court = Math.floor(num / 100)
+    const hour = num % 100
+    return { court, hour }
+}
+
+function makeReservation() {
+    const $selected = $('.hour.selected')
+    const { court, hour } = court_and_hour_from_cell($selected.eq(0))
+    const hours = $selected.length 
+    const d = currentDate
+    const ymd = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate()
+    const hour_str = hour.toString().padStart(2, '0') + ':00';
+    const resv = {
+        court, date: String(ymd),
+        start: hour, time: hour_str, hours,
+    }
+
+    window.api.makeReservation(resv)
+}
 
 async function loadDate(date, dayDiff, forced) {
     if (!date) {

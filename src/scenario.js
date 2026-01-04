@@ -1,4 +1,5 @@
 const { Menu } = require('electron');
+const configLoader = require('./configLoader')
 
 class Scenario {
     constructor() {
@@ -12,8 +13,18 @@ class Scenario {
     //     this.index = -1
     //     this.next()
     // }
+    setIndex(index) {
+        this.index = index
+        console.log(`Now scenario index is ${index}`)
+    }
     next() {
-        this.index += 1
+        while (true) {
+            this.index += 1
+            if (!configLoader.isMenuIndexMarked(this.index)) {
+                console.log({index: this.index, msg: 'Not marked'})
+                break
+            }
+        }
         const menuId = `reserve-${this.index}`
         const menu = Menu.getApplicationMenu()
         const menuItem = menu.getMenuItemById(menuId)
@@ -23,7 +34,7 @@ class Scenario {
         }
         const label = `시나리오 - ${this.index+1}: ${menuItem.label}`
         this.updateMenuLabel(label)
-        console.log({menuId, menuItem})
+        // console.log({menuId, menuItem})
         menuItem.click()
     }
     endScenario() {

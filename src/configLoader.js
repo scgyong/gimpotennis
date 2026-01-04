@@ -76,10 +76,19 @@ function saveConfig(cfg) {
 
 let marked = {}
 
-function markReserved(r, name) {
-  const key = `${r.court},${r.date},${r.time}`
-  marked[key] = name
-  console.log({key, name})
+function markReserved(ymd, result) {
+  for (const resv of config.reservations) {
+    if (resv.date != ymd) continue;
+    const court_sched = result[resv.court]
+    const sched = court_sched[resv.time]
+
+    if (Array.isArray(sched)) {
+      const name = sched[0]
+      const key = `${resv.court},${resv.date},${resv.time}`
+      marked[key] = name
+      console.log(`marking ${key} as ${name}`)
+    }
+  }
 
   if (reloadCallback) {
     reloadCallback()
@@ -91,7 +100,13 @@ function markedName(r) {
   return marked[key] ?? ''  
 }
 
+function isMenuIndexMarked(index) {
+  if (index >= config.reservations.length) return false;
+  const r = config.reservations[index]
+  return markedName(r)
+}
+
 module.exports = { 
   getConfig, reloadConfig, saveConfig, setReloadCallback,
-  markReserved, markedName,
+  markReserved, markedName, isMenuIndexMarked,
 };

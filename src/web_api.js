@@ -6,6 +6,7 @@ const BASE_URL = 'http://www.gimposports.or.kr'
 const ROOT_URL = `${BASE_URL}/`
 const LOGIN_URL = `${BASE_URL}/bbs/login.php`
 const MAIN_URL = `${BASE_URL}/bbs/orderCourse.php`
+const ORDERS_URL = `${BASE_URL}/bbs/member_confirm.php?url=${BASE_URL}/bbs/orders_form.php`
 const CONFIRM_URL = `${BASE_URL}/bbs/member_confirm.php`
 const ORDER_ACTION = `${BASE_URL}/skin/orders/orderAction.php`
 const http = require('http');
@@ -62,12 +63,14 @@ class WebApi {
         } else if (currentUrl == MAIN_URL) {
             console.log('prevUrl:', this.prevUrl)
             this.window.webContents.executeJavaScript(scripts.showCalendar())
+            this.updateBookedState()
             // if (this.prevUrl.indexOf('/orderAction.php') >= 0) {
-                this.updateBookedState()
+            //     setTimeout(()=>{
+            //         scenario.next()
+            //     }, 1000)
             // }
         } else if (currentUrl == ORDER_ACTION) {
             this.closePaymentWindow()
-            scenario.next()
         }
     }
     setPaymentWindow(pwin) {
@@ -86,6 +89,8 @@ class WebApi {
             this.window.loadURL(LOGIN_URL)
         } else if (target == 'window') {
             this.window.loadURL(MAIN_URL)
+        } else if (target == 'orders') {
+            this.window.loadURL(ORDERS_URL)
         }
     }
     onMenuReservation(r) {
@@ -113,7 +118,7 @@ class WebApi {
         }
         this.window.webContents.executeJavaScript(scripts.hilightDate(r.date))
         const script = scripts.reservation(r)
-        console.log(script, r)
+        console.log('Booking:', r)
         this.reservationData = r
         this.window.webContents.executeJavaScript(script)
     }
@@ -126,13 +131,7 @@ class WebApi {
         const ymd = this.reservationData.date
         const script = scripts.dateTimeslot(ymd)
         const result = await this.window.webContents.executeJavaScript(script)
-        const court_sched = result[this.reservationData.court]
-        const resv = court_sched[this.reservationData.time]
-        // console.log(court_sched, resv)
-        if (Array.isArray(resv)) {
-            const name = resv[0]
-            configLoader.markReserved(this.reservationData, name)
-        }
+        configLoader.markReserved(ymd, result)
     }
     onTimeCheck(success) {
         //console.log(`onTimeCheck(${success})`)
