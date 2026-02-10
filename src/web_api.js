@@ -48,6 +48,43 @@ class WebApi {
 
         window.loadURL(LOGIN_URL)
     }
+    
+    onTodayCheckComplete(info) {
+        console.log('[WebApi] onTodayCheckComplete called with:', info);
+        // todaycheck.php 응답 처리
+        // 필요한 비즈니스 로직 추가
+    }
+    
+    onTimeboardResult(info) {
+        info.response = `${info.response.length} chars long`
+        console.log('[WebApi] onTimeboardResult called with:', info);
+        const { url, response } = info;
+        
+        // HTML 파싱 및 타임보드 처리
+        try {
+            const schedules_cache = require('./schedules_cache');
+            schedules_cache.parseTimeBoard(info);
+            console.log('[WebApi] timeBoard4 cached');
+        } catch (e) {
+            console.error('[WebApi] timeBoard4 parsing error:', e);
+        }
+    }
+    
+    onAjaxComplete(info) {
+        const { url } = info;
+        console.log('[WebApi] onAjaxComplete:', url);
+        
+        // todaycheck.php 처리
+        if (url.includes('/skin/orders/todaycheck.php')) {
+            this.onTodayCheckComplete(info);
+        }
+        
+        // timeBoard4.php 처리
+        if (url.includes('/skin/orders/timeBoard4.php')) {
+            this.onTimeboardResult(info);
+        }
+    }
+    
     onLoad() {
         const currentUrl = this.window.webContents.getURL();
         console.log("onLoad(): ", currentUrl);
@@ -65,6 +102,8 @@ class WebApi {
             console.log('prevUrl:', this.prevUrl)
             this.window.webContents.executeJavaScript(scripts.showCalendar())
             this.updateBookedState()
+            // alert 리스너 설치
+            this.setupAlertListener()
             // if (this.prevUrl.indexOf('/orderAction.php') >= 0) {
             //     setTimeout(()=>{
             //         scenario.next()
@@ -74,6 +113,34 @@ class WebApi {
             this.closePaymentWindow()
         }
     }
+    
+    setupAlertListener() {
+        const script = `
+        (function() {
+            const origAlert = window.alert;
+            window.alert = function(msg) {
+                console.log('[Renderer] alert:', msg);
+                
+                // orderAction.php 에서 온 alert만 관심 있음
+                if (location.href.includes('orderAction.php')) {
+                    if (msg.includes('이미예약된 데이터')) {
+                        console.log('[Alert] ❌ 중복 예약');
+                    } else if (msg.includes('예약이 완료되었습니다')) {
+                        console.log('[Alert] ✅ 예약 성공');
+                    } else {
+                        console.log('[Alert] (기타)', msg);
+                    }
+                }
+                
+                return origAlert.call(window, msg);
+            };
+            console.log('[WebApi] alert listener installed');
+        })();
+        `;
+        
+        this.window.webContents.executeJavaScript(script);
+    }
+    
     setPaymentWindow(pwin) {
         this.closePaymentWindow()
         this.paymentWin = pwin

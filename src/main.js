@@ -6,6 +6,7 @@ const { SettingsApi } = require('./settings_api')
 const configLoader = require('./configLoader')
 const menu_time = require('./common/menu_time.js')
 const scenario = require('./scenario')
+const schedules_cache = require('./schedules_cache')
 
 let webApiMap = {};
 function getWebApiFromWindow(win) {
@@ -374,6 +375,24 @@ ipcMain.handle('schedules:reservation', (event, arg) => {
   web_api.onMenuReservation(arg)
 })
 
+ipcMain.on('ajax-complete', (event, info) => {
+  console.log('[IPC] ajax-complete:', info.url);
+  
+  // AJAX를 보낸 renderer의 window를 정확히 파악
+  const senderWindow = event.sender.getOwnerBrowserWindow();
+  
+  if (!senderWindow) {
+    console.error('[IPC] Could not find sender window');
+    return;
+  }
+  
+  // 해당 window의 web_api에 위임 (URL 분기는 web_api에서)
+  const web_api = getWebApiFromWindow(senderWindow);
+  if (web_api) {
+    web_api.onAjaxComplete(info);
+  }
+})
+
 ipcMain.handle('order-alert', (event, info) => {
   const { url, message } = info;
   console.log('[order-alert]', url, message);
@@ -390,6 +409,23 @@ ipcMain.handle('order-alert', (event, info) => {
       console.log('(기타 alert)', message);
     }
   }
+});
+
+ipcMain.handle('schedules:update-date', (event, { ymd, scheduleData }) => {
+  const schedules_cache = require('./schedules_cache');
+  schedules_cache.setForDate(ymd, scheduleData);
+  console.log('[schedules] updated for', ymd);
+  return { success: true };
+});
+
+ipcMain.handle('schedules:get-cached', (event) => {
+  const schedules_cache = require('./schedules_cache');
+  return schedules_cache.getAll();
+});
+
+ipcMain.handle('schedules:cache-status', (event) => {
+  const schedules_cache = require('./schedules_cache');
+  return schedules_cache.getStatus();
 });
 
 app.on('window-all-closed', () => {

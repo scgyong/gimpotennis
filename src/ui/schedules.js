@@ -1,13 +1,108 @@
+// ============================================================================
+// 환경 감지 (Electron vs Browser)
+// ============================================================================
+const isElectron = () => {
+    try {
+        return typeof window !== 'undefined' && 
+               typeof window.api !== 'undefined' && 
+               window.api !== null;
+    } catch (e) {
+        return false;
+    }
+};
+
+// ============================================================================
+// API Wrapper (Electron 환경 체크)
+// ============================================================================
+const electronApi = {
+  getCachedSchedules: async () => {
+    if (!isElectron()) {
+      console.log('[schedules] running in browser mode, cache disabled');
+      return {};
+    }
+    try {
+      return await window.api.getCachedSchedules();
+    } catch (e) {
+      console.error('[schedules] getCachedSchedules error:', e);
+      return {};
+    }
+  },
+  
+  sendScheduleForDate: async (ymd, scheduleData) => {
+    if (!isElectron()) {
+      console.log('[schedules] browser mode, skipping cache update');
+      return;
+    }
+    try {
+      return await window.api.sendScheduleForDate(ymd, scheduleData);
+    } catch (e) {
+      console.error('[schedules] sendScheduleForDate error:', e);
+    }
+  },
+  
+  makeReservation: async (resv) => {
+    if (!isElectron()) {
+      console.log('[schedules] browser mode, reservation not available');
+      alert('예약은 Electron 애플리케이션에서만 가능합니다.');
+      return;
+    }
+    try {
+      return await window.api.makeReservation(resv);
+    } catch (e) {
+      console.error('[schedules] makeReservation error:', e);
+    }
+  }
+};
+
+// ============================================================================
+// 유틸리티 함수
+// ============================================================================
+
+/**
+ * Date 객체를 'YYYYMMDD' 문자열로 변환
+ */
+function formatYmd(date) {
+    const yy = date.getFullYear();
+    const mm = (date.getMonth() + 1).toString().padStart(2, '0');
+    const dd = date.getDate().toString().padStart(2, '0');
+    return yy + mm + dd;
+}
+
+// ============================================================================
+// Main Load
+// ============================================================================
 async function onLoad() {
-    $('#date_prev').click(()=>{loadDate(null, -1)})
-    $('#date_next').click(()=>{loadDate(null, 1)})
-    $('#date_refresh').click(()=>{loadDate(currentDate, 0, true)})
-    fillHours()
+    try {
+        $('#date_prev').click(()=>{loadDate(null, -1)})
+        $('#date_next').click(()=>{loadDate(null, 1)})
+        $('#date_refresh').click(()=>{loadDate(currentDate, 0, true)})
+        fillHours()
 
-    $('.hour').click(onAvailableCell)
+        $('.hour').click(onAvailableCell)
 
-    currentDate = new Date()
-    await loadDate(currentDate)
+        currentDate = new Date()
+        const ymd = formatYmd(currentDate)
+        
+        // Main에서 캐시받기 (async/await, 환경 체크)
+        const cached = await electronApi.getCachedSchedules();
+        if (cached && Object.keys(cached).length > 0) {
+            Object.assign(schedules, cached);
+            console.log('[schedules] 📦 캐시 복원:', Object.keys(schedules).length, '개 날짜');
+            
+            // 첫 날짜가 캐시에 있으면 그것을 사용
+            if (schedules[ymd]) {
+                console.log('[schedules] ✅ 캐시에서 로드:', ymd);
+                updateSchedule(ymd);
+                return;
+            }
+        }
+        
+        // 캐시 없으면 서버에서 로드
+        console.log('[schedules] 🌐 네트워크에서 로드:', ymd);
+        await loadDate(currentDate);
+    } catch (e) {
+        console.error('[schedules] onLoad error:', e);
+    }
 }
 
 const HANJA_WEEKDAYS = "日月火水木金土";
@@ -60,39 +155,50 @@ function makeReservation() {
         start: hour, time: hour_str, hours,
     }
 
-    window.api.makeReservation(resv)
+    electronApi.makeReservation(resv)
 }
 
 async function loadDate(date, dayDiff, forced) {
-    if (!date) {
-        date = new Date(currentDate.setDate(currentDate.getDate() + dayDiff));
-    }
+    try {
+        if (!date) {
+            date = new Date(currentDate.setDate(currentDate.getDate() + dayDiff));
+        }
 
-    const yy = date.getFullYear()
-    const mm = (date.getMonth() + 1).toString().padStart(2, '0')
-    const dd = date.getDate().toString().padStart(2, '0')
-    const wd = HANJA_WEEKDAYS.charAt(date.getDay())
+        const yy = date.getFullYear()
+        const mm = (date.getMonth() + 1).toString().padStart(2, '0')
+        const dd = date.getDate().toString().padStart(2, '0')
+        const wd = HANJA_WEEKDAYS.charAt(date.getDay())
 
-    $('#date').html(`${yy}.${mm}.${dd}(${wd})`)
+        $('#date').html(`${yy}.${mm}.${dd}(${wd})`)
 
-    const ymd = yy+mm+dd
-    const existing = schedules[ymd]
-    if (!forced && existing) {
+        const ymd = yy+mm+dd
+        const existing = schedules[ymd]
+        if (!forced && existing) {
+            console.log('[schedules] ✅ 캐시에서 로드:', ymd);
+            updateSchedule(ymd)
+            return
+        }
+
+        console.log('[schedules] 🌐 네트워크에서 로드:', ymd);
+        const now = new Date()
+        const res = await $.ajax({
+            url: 'http://www.gimposports.or.kr/skin/orders/timeSlots.php',
+            type: 'POST',
+            data: { orderDate: ymd },
+            dataType: 'json',
+        })
+
+        schedules[ymd] = { time: now, data: res }
+        
+        // Main에 전송 (날짜별 증분 업데이트, 환경 체크)
+        await electronApi.sendScheduleForDate(ymd, { time: now, data: res });
+        
+        console.log('[schedules] 💾 캐시에 저장:', ymd);
+        console.log(res)
         updateSchedule(ymd)
-        return
+    } catch (e) {
+        console.error('[schedules] loadDate error:', e);
     }
-
-    const now = new Date()
-    const res = await $.ajax({
-        url: 'http://www.gimposports.or.kr/skin/orders/timeSlots.php',
-        type: 'POST',
-        data: { orderDate: ymd },
-        dataType: 'json',
-    })
-
-    schedules[ymd] = { time: now, data: res }
-    console.log(res)
-    updateSchedule(ymd)
 }
 
 const hour_classes = [
