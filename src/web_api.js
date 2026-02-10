@@ -31,6 +31,7 @@ async function checkApi(url) {
 
 class WebApi {
     async start(window, session) {
+        this.triedLogin = false
         this.window = window
         this.session = session
         this.paymentWin = null
@@ -53,6 +54,8 @@ class WebApi {
         const currentUrl = this.window.webContents.getURL();
         console.log("onLoad(): ", currentUrl);
         if (currentUrl == LOGIN_URL) {
+            if (this.triedLogin) { return }
+            this.triedLogin = true
             const script = scripts.login(this.session.user_id, this.session.user_pw)
             // console.log(script)
             this.window.webContents.executeJavaScript(script)
