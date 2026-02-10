@@ -11,8 +11,6 @@ const CONFIRM_URL = `${BASE_URL}/bbs/member_confirm.php`
 const ORDER_ACTION = `${BASE_URL}/skin/orders/orderAction.php`
 const http = require('http');
 
-// const TOOLBAR_FILE = 'ui/toolbar.html'
-
 async function checkApi(url) {
   return new Promise((resolve, reject) => {
     http.get(url, (res) => {
