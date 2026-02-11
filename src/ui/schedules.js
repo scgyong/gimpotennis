@@ -68,6 +68,18 @@ function formatYmd(date) {
     return yy + mm + dd;
 }
 
+/**
+ * Date 객체의 날짜를 UI에 표시
+ * @param {Date} date - 표시할 날짜
+ */
+function displayDate(date) {
+    const yy = date.getFullYear()
+    const mm = (date.getMonth() + 1).toString().padStart(2, '0')
+    const dd = date.getDate().toString().padStart(2, '0')
+    const wd = HANJA_WEEKDAYS.charAt(date.getDay())
+    $('#date').html(`${yy}.${mm}.${dd}(${wd})`)
+}
+
 // ============================================================================
 // Main Load
 // ============================================================================
@@ -76,6 +88,32 @@ async function onLoad() {
         $('#date_prev').click(()=>{loadDate(null, -1)})
         $('#date_next').click(()=>{loadDate(null, 1)})
         $('#date_refresh').click(()=>{loadDate(currentDate, 0, true)})
+        
+        // 날짜 클릭시 날짜 피커 표시 (이벤트 위임)
+        $(document).on('click', '#date', () => {
+            const yy = currentDate.getFullYear()
+            const mm = (currentDate.getMonth() + 1).toString().padStart(2, '0')
+            const dd = currentDate.getDate().toString().padStart(2, '0')
+            console.log('Show date picker for', `${yy}-${mm}-${dd}`);
+            const pickerInput = document.getElementById('date_picker');
+            pickerInput.value = `${yy}-${mm}-${dd}`;
+            // 브라우저 기본 date picker 표시
+            if (pickerInput.showPicker) {
+                pickerInput.showPicker();
+            } else {
+                // 구형 브라우저 대비
+                pickerInput.click();
+            }
+        })
+        
+        // 날짜 피커 변경 이벤트
+        $('#date_picker').change(function() {
+            const selectedDate = new Date(this.value);
+            if (!isNaN(selectedDate.getTime())) {
+                currentDate = selectedDate;
+                loadDate(currentDate, 0, false);
+            }
+        })
         fillHours()
 
         $('.hour').click(onAvailableCell)
@@ -88,17 +126,10 @@ async function onLoad() {
         if (cached && Object.keys(cached).length > 0) {
             Object.assign(schedules, cached);
             console.log('[schedules] 📦 캐시 복원:', Object.keys(schedules).length, '개 날짜');
-            
-            // 첫 날짜가 캐시에 있으면 그것을 사용
-            if (schedules[ymd]) {
-                console.log('[schedules] ✅ 캐시에서 로드:', ymd);
-                updateSchedule(ymd);
-                return;
-            }
         }
         
-        // 캐시 없으면 서버에서 로드
-        console.log('[schedules] 🌐 네트워크에서 로드:', ymd);
+        // loadDate에서 TTL 체크하므로 여기선 단순 로드만
+        console.log('[schedules] 🌐 loadDate 호출:', ymd);
         await loadDate(currentDate);
     } catch (e) {
         console.error('[schedules] onLoad error:', e);
@@ -164,23 +195,29 @@ async function loadDate(date, dayDiff, forced) {
             date = new Date(currentDate.setDate(currentDate.getDate() + dayDiff));
         }
 
+        // 날짜 표시
+        displayDate(date)
+
         const yy = date.getFullYear()
         const mm = (date.getMonth() + 1).toString().padStart(2, '0')
         const dd = date.getDate().toString().padStart(2, '0')
-        const wd = HANJA_WEEKDAYS.charAt(date.getDay())
-
-        $('#date').html(`${yy}.${mm}.${dd}(${wd})`)
-
         const ymd = yy+mm+dd
         const existing = schedules[ymd]
-        if (!forced && existing) {
+        
+        // 캐시 유효성 체크 (30분 TTL)
+        const CACHE_TTL_MS = 30 * 60 * 1000;
+        const isCacheValid = existing && 
+                             existing.time && 
+                             (Date.now() - existing.time) < CACHE_TTL_MS;
+        
+        if (!forced && isCacheValid) {
             console.log('[schedules] ✅ 캐시에서 로드:', ymd);
             updateSchedule(ymd)
             return
         }
 
         console.log('[schedules] 🌐 네트워크에서 로드:', ymd);
-        const now = new Date()
+        const now = Date.now()
         const res = await $.ajax({
             url: 'http://www.gimposports.or.kr/skin/orders/timeSlots.php',
             type: 'POST',
@@ -238,9 +275,10 @@ function updateSchedule(ymd) {
         }
     }
 
-    const hours = String(sched.time.getHours()).padStart(2, '0'); // 시간 (예: 09)
-    const minutes = String(sched.time.getMinutes()).padStart(2, '0'); // 분 (예: 05)
-    const seconds = String(sched.time.getSeconds()).padStart(2, '0'); // 초 (예: 01)
+    const date = new Date(sched.time);
+    const hours = String(date.getHours()).padStart(2, '0'); // 시간 (예: 09)
+    const minutes = String(date.getMinutes()).padStart(2, '0'); // 분 (예: 05)
+    const seconds = String(date.getSeconds()).padStart(2, '0'); // 초 (예: 01)
 
     $('.update-time').html(`${hours}:${minutes}:${seconds}`)
 }

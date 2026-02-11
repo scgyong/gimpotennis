@@ -25,59 +25,81 @@ configLoader.setReloadCallback(()=>{
 
 const settings_api = new SettingsApi()
 
+/**
+ * 단일 사용자 창 생성 함수
+ * @param {Object} sess - session 객체 { user_id, user_pw }
+ */
+function createWindowForSession(sess) {
+  // 이미 창이 있으면 리턴
+  if (webApiMap[sess.user_id]) {
+    console.log('[createWindowForSession] Window already exists for', sess.user_id);
+    return webApiMap[sess.user_id].window;
+  }
+
+  const win = new BrowserWindow({
+    width: 1280,
+    height: 960,
+    icon: path.join(__dirname, 'ui/icon.icns'),
+    webPreferences: {
+      partition: sess.user_id,
+      preload: path.join(__dirname, 'preload_main.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    console.log('결제 창 요청 URL:', url);
+
+    // 새 BrowserWindow 생성
+    const paymentWin = new BrowserWindow({
+      width: 800,
+      height: 600,
+      webPreferences: {
+        session: win.webContents.session, // ★ 동일 세션 공유
+        preload: path.join(__dirname, 'preload_main.js'),
+        contextIsolation: true,
+        nodeIntegration: false,
+        nativeWindowOpen: true
+      }
+    });
+
+    paymentWin.loadURL(url);
+    const web_api = getWebApiFromWindow(win)
+    web_api.setPaymentWindow(paymentWin)
+    
+    return { action: 'allow' }; // 원래 브라우저 새 창은 막음
+  });
+
+  const web_api = new WebApi()
+  web_api.start(win, sess)
+  webApiMap[sess.user_id] = web_api
+
+  win.on('page-title-updated', (event) => {
+    event.preventDefault(); // 자동 title 변경 막기
+  });
+  win.setTitle(sess.user_id)
+  
+  // 창이 닫히면 webApiMap에서 정리
+  win.on('closed', () => {
+    delete webApiMap[sess.user_id];
+    console.log('[main] WebApi removed for', sess.user_id);
+  });
+
+  win.webContents.on('will-prevent-unload', (event) => {
+    console.log('[will-prevent-unload] forcing unload');
+    event.preventDefault(); // ✅ 확인 대화 없이 나가기/리로드 허용
+  });
+
+  console.log('[createWindowForSession] Window created for', sess.user_id);
+  return win;
+}
+
 function createWindows() {
   const config = configLoader.getConfig()
   // Main reservation window (initially blank)
   for (const sess of config.sessions) {
-    const win = new BrowserWindow({
-      width: 1280,
-      height: 960,
-      icon: path.join(__dirname, 'ui/icon.icns'),
-      webPreferences: {
-        partition: sess.user_id,
-        preload: path.join(__dirname, 'preload_main.js'),
-        contextIsolation: true,
-        nodeIntegration: false
-      }
-    });
-
-    win.webContents.setWindowOpenHandler(({ url }) => {
-      console.log('결제 창 요청 URL:', url);
-
-      // 새 BrowserWindow 생성
-      const paymentWin = new BrowserWindow({
-        width: 800,
-        height: 600,
-        webPreferences: {
-          session: win.webContents.session, // ★ 동일 세션 공유
-          preload: path.join(__dirname, 'preload_main.js'),
-          contextIsolation: true,
-          nodeIntegration: false,
-          nativeWindowOpen: true
-        }
-      });
-
-      paymentWin.loadURL(url);
-      const web_api = getWebApiFromWindow(win)
-      web_api.setPaymentWindow(paymentWin)
-      
-      return { action: 'allow' }; // 원래 브라우저 새 창은 막음
-    });
-
-    //win.webContents.openDevTools();
-    const web_api = new WebApi()
-    web_api.start(win, sess)
-    webApiMap[sess.user_id] = web_api
-
-    win.on('page-title-updated', (event) => {
-      event.preventDefault(); // 자동 title 변경 막기
-    });
-    win.setTitle(sess.user_id)
-
-    win.webContents.on('will-prevent-unload', (event) => {
-      console.log('[will-prevent-unload] forcing unload');
-      event.preventDefault(); // ✅ 확인 대화 없이 나가기/리로드 허용
-    });
+    createWindowForSession(sess);
   }
 
   buildMenuFromReservations(config)
@@ -225,7 +247,11 @@ function buildMenuFromReservations(config) {
             accelerator: 'CmdOrCtrl+,',
             click: () => showSettings(BrowserWindow.getFocusedWindow())
         },
-        // { type: 'separator' },
+        { type: 'separator' },
+        { label: 'Close Window', accelerator: 'CmdOrCtrl+W', click: () => {
+          const win = BrowserWindow.getFocusedWindow();
+          if (win) win.close();
+        }},
         // { label: 'Reload', accelerator: 'CmdOrCtrl+R', click: reloadFocusedIgnoringCache },
         // { label: 'Force Reload', accelerator: 'Shift+CmdOrCtrl+R', click: reloadFocusedIgnoringCache },
       ]
@@ -245,6 +271,29 @@ function buildMenuFromReservations(config) {
         },
       ]
     },
+    {
+      label: 'Account',
+      submenu: config.sessions.map((sess, idx) => ({
+        label: sess.user_id,
+        accelerator: `CmdOrCtrl+${idx + 1}`,
+        click: () => {
+          // 창이 없으면 생성
+          let win = webApiMap[sess.user_id] ? webApiMap[sess.user_id].window : null;
+          if (!win || win.isDestroyed()) {
+            console.log('[menu] Creating window for', sess.user_id);
+            win = createWindowForSession(sess);
+          }
+          
+          // 창 활성화
+          if (win.isMinimized()) {
+            win.restore();
+          }
+          win.show();
+          win.focus();
+          console.log('[menu] Focused window for', sess.user_id);
+        }
+      }))
+    },
     // { role: 'editMenu' },
         { role: 'viewMenu' },
 
@@ -260,10 +309,10 @@ function buildMenuFromReservations(config) {
 
 function goToPage(title) {
   const win = BrowserWindow.getFocusedWindow();
-  console.log({win})
+  // console.log({win})
   if (!win) return;
   const web_api = getWebApiFromWindow(win)
-  console.log({web_api})
+  // console.log({web_api})
   if (!web_api) return;
   web_api.navigate(null, title)
 }
@@ -339,7 +388,10 @@ function showSettings(parentWin) {
   });
 }
 
-app.whenReady().then(createWindows);
+app.whenReady().then(() => {
+  createWindows();
+});
+
 
 ipcMain.handle('navigate', (event, user_id, target) => {
   const web_api = webApiMap[user_id]
@@ -350,13 +402,14 @@ ipcMain.handle('navigate', (event, user_id, target) => {
   web_api.navigate(event, target)
 });
 
-ipcMain.handle('timecheck', (event, user_id, success) => {
+ipcMain.handle('timecheck', (event, user_id, arg) => {
   const web_api = webApiMap[user_id]
+  console.log(`[IPC] timecheck: ${user_id}, ${arg}`)
   if (!web_api) {
     console.error(`WebApi not found for ${user_id}`)
     return
   }
-  web_api.onTimeCheck(success)
+  web_api.onTimeCheck(arg)
 });
 
 ipcMain.handle('timeboard', (event, opts, data) => {
@@ -369,14 +422,14 @@ ipcMain.handle('settings:save', (event, cfg) => {
 
 ipcMain.handle('schedules:reservation', (event, arg) => {
   const web_api = getWebApiFromWindow(schedulesWindow.getParentWindow())
-  console.log(web_api)
+  // console.log(web_api)
   schedulesWindow.close()
   schedulesWindow = null
   web_api.onMenuReservation(arg)
 })
 
 ipcMain.on('ajax-complete', (event, info) => {
-  console.log('[IPC] ajax-complete:', info.url);
+  // console.log('[IPC] ajax-complete:', info.url);
   
   // AJAX를 보낸 renderer의 window를 정확히 파악
   const senderWindow = event.sender.getOwnerBrowserWindow();

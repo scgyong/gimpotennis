@@ -31,7 +31,10 @@
       <div class="update-time"></div>
       <div class="date-part">
         <button class="btn btn-outline-info" id="date_prev">&lt;</button>
-        <span id="date"></span>
+        <div style="position: relative; display: inline-block;">
+          <span id="date" style="cursor: pointer; user-select: none;"></span>
+          <input type="date" id="date_picker" style="position: absolute; opacity: 0; left: 0; top: 0; width: 1px; height: 1px; cursor: pointer;">
+        </div>
         <button class="btn btn-outline-info" id="date_next">&gt;</button>
       </div>
       <button class="btn btn-outline-success" id="date_refresh">🔄 Reload</button>

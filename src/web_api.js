@@ -50,29 +50,41 @@ class WebApi {
     }
     
     onTodayCheckComplete(info) {
-        console.log('[WebApi] onTodayCheckComplete called with:', info);
+        console.log('[WebApi] onTodayCheckComplete called with:', {date:info.payload.dateYmd, response:info.response});
         // todaycheck.php 응답 처리
         // 필요한 비즈니스 로직 추가
     }
     
     onTimeboardResult(info) {
-        info.response = `${info.response.length} chars long`
-        console.log('[WebApi] onTimeboardResult called with:', info);
-        const { url, response } = info;
+        // console.log('[WebApi] onTimeboardResult called with:', info);
         
-        // HTML 파싱 및 타임보드 처리
-        try {
-            const schedules_cache = require('./schedules_cache');
-            schedules_cache.parseTimeBoard(info);
-            console.log('[WebApi] timeBoard4 cached');
-        } catch (e) {
-            console.error('[WebApi] timeBoard4 parsing error:', e);
+        const { payload, response } = info;
+        if (!payload || !payload.orderDate) {
+            console.warn('[WebApi] onTimeboardResult: no orderDate in payload');
+            return;
         }
+        
+        // sRoom에서 코트 번호 추출 (예: "B관" -> 2)
+        const courtName = payload.sRoom;
+        const courtNum = courtName ? courtName.charCodeAt(0) - 'A'.charCodeAt(0) + 1 : null;
+        
+        if (!courtNum) {
+            console.warn('[WebApi] onTimeboardResult: invalid sRoom', courtName);
+            return;
+        }
+        
+        // schedules_cache에 전달
+        const schedules_cache = require('./schedules_cache');
+        const resv = {
+            date: payload.orderDate,
+            court: courtNum
+        };
+        schedules_cache.parseTimeBoard(resv, response);
     }
     
     onAjaxComplete(info) {
         const { url } = info;
-        console.log('[WebApi] onAjaxComplete:', url);
+        // console.log('[WebApi] onAjaxComplete:', url);
         
         // todaycheck.php 처리
         if (url.includes('/skin/orders/todaycheck.php')) {
@@ -187,65 +199,36 @@ class WebApi {
         this.window.webContents.executeJavaScript(scripts.hilightDate(r.date))
         const script = scripts.reservation(r)
         console.log('Booking:', r)
-        this.reservationData = r
+        this.reservation = r
         this.window.webContents.executeJavaScript(script)
     }
     async updateBookedState() {
-        if (!this.reservationData) {
+        if (!this.reservation) {
             console.log('No reservation Data on updateBookedState()')
             return
         }
-        // console.log(this.reservationData)
-        const ymd = this.reservationData.date
+        // console.log(this.reservation)
+        const ymd = this.reservation.date
         const script = scripts.dateTimeslot(ymd)
         const result = await this.window.webContents.executeJavaScript(script)
         configLoader.markReserved(ymd, result)
     }
-    onTimeCheck(success) {
-        //console.log(`onTimeCheck(${success})`)
+    onTimeCheck(arg) {
+        if (arg?.success && arg?.responseText) {
+            const schedules_cache = require('./schedules_cache')
+            schedules_cache.parseTimeBoard(this.reservation, arg.responseText)
+        }
+        // TODO: schedules_cache에서 alreadyBooked 체크 후 재활성화
+        if (this.alreadyBooked(this.reservation)) {
+            this.showBooked(this.reservation)
+            return
+        }
         this.makeReservation(this.reservation)
     }
     alreadyBooked(r) {
-        const key = `${r.date}_${r.court}`
-        const slots = timetable[key]
-        if (!slots) return false;
-        if (slots[r.time] == 'no') {
-            console.log(`${r.date} ${r.time} Court ${r.court} is blocked`)
-            return true;
-        }
-        console.log('in alreadyBooked(),', {slots, t:typeof(slots)})
-        if (r.hours > 1) {
-            const hour = Number(r.time.split(/:/)[0])+1
-            const hour_str = hour.toString().padStart(2, '0') + ':00';
-            if (slots[hour_str] == 'no') { 
-                console.log(`${r.date} ${r.time} Court ${r.court} is blocked`)
-                return true;
-            }
-        }
-        return false
+        const schedules_cache = require('./schedules_cache');
+        return schedules_cache.alreadyBooked(r);
     }
 }
 
-let timetable = {}
-
-function handleTimeboard(opts, data) {
-    const date = opts.data.orderDate
-    const court = opts.data.sRoom[0].charCodeAt(0) - 'A'.charCodeAt(0) + 1;
-    const slots = {}
-    for (const line of data.split(/\n/)) {
-        const m = line.match(/^\s*<label class="(on|no) labelDate" data="(\d{2}:\d{2})"/)
-        if (!m) continue;
-        slots[m[2]] = m[1]
-    }
-    const key = `${date}_${court}`
-    const timeCount = Object.keys(slots).length
-    if (timeCount > 0) {
-        timetable[key] = slots
-        console.log('timetable add:', {key, count: timeCount})
-    }
-    //console.log('timetable add:', {key})
-
-    //console.log({opts, len:data.length})
-}
-
-module.exports = { WebApi, handleTimeboard }
+module.exports = { WebApi };

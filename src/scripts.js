@@ -37,8 +37,8 @@ class Scripts {
         return `
             (function(){
                 let tryCount = 5
-                function onSuccess() {
-                    window.electronAPI.onTimeCheck("${uid}", true)
+                function onSuccess(resp) {
+                    window.electronAPI.onTimeCheck("${uid}", { responseText: resp, success: true })
                 }
                 function onError() {
                     if (tryCount > 0) {
@@ -46,7 +46,7 @@ class Scripts {
                         tryAjax()
                         return
                     }
-                    window.electronAPI.onTimeCheck("${uid}", false)
+                    window.electronAPI.onTimeCheck("${uid}", { success: false })
                 }
                 function tryAjax() {
                     $.ajax({

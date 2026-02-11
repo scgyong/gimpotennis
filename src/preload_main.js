@@ -4,6 +4,7 @@ try {
   contextBridge.exposeInMainWorld('electronAPI', {
     onAjaxComplete: (info) => ipcRenderer.send('ajax-complete', info),
     onOrderAlert: (info) => ipcRenderer.send('order-alert', info),
+    onTimeCheck: (user_id, success) => ipcRenderer.invoke('timecheck', user_id, success),
   });
   console.log('[preload] loaded');
 } catch (e) {
