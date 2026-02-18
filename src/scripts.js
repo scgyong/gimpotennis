@@ -60,6 +60,25 @@ class Scripts {
             })()
         `
     }
+    checkAndFillPopup() {
+        const config = configLoader.getConfig()
+        return `
+            (function() {
+                if (!$('.n_popup').hasClass('on')) {
+                    return
+                }
+                if (!document.querySelector('#xieyi').checked) {
+                    document.querySelector('#xieyi').click()
+                }
+                document.querySelector('#teamName').value = "${config.groupName}"
+                document.querySelector('#teamCnt').value = ${config.groupCount}
+                document.querySelector('#area1').click()
+                document.querySelector('#payGubunTypes1').click()
+                
+                $('.board_btn a')[1].scrollIntoView()
+            })()
+        `
+    }
     reservation(r) {
         const config = configLoader.getConfig()
 
@@ -98,7 +117,9 @@ class Scripts {
             reservForm.dateTime2.value = '${time2}';
             reservWriteFunc()
 
-            document.querySelector('#xieyi').click()
+            if (!document.querySelector('#xieyi').checked) {
+                document.querySelector('#xieyi').click()
+            }
             document.querySelector('#teamName').value = "${config.groupName}"
             document.querySelector('#teamCnt').value = ${config.groupCount}
             document.querySelector('#area1').click()

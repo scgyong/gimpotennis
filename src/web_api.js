@@ -51,8 +51,25 @@ class WebApi {
     
     onTodayCheckComplete(info) {
         console.log('[WebApi] onTodayCheckComplete called with:', {date:info.payload.dateYmd, response:info.response});
-        // todaycheck.php 응답 처리
-        // 필요한 비즈니스 로직 추가
+        
+        // 기존 타이머 취소
+        if (this.todayCheckTimer) {
+            clearTimeout(this.todayCheckTimer);
+        }
+        
+        // 1초 후 checkAndFillPopup() 호출
+        this.todayCheckTimer = setTimeout(() => {
+            this.todayCheckTimer = null;
+            this.checkAndFillPopup();
+        }, 500);
+    }
+    
+    checkAndFillPopup() {
+        console.log('[WebApi] checkAndFillPopup called');
+        // 팝업 체크 및 채우기 로직 추가
+        const script = scripts.checkAndFillPopup();
+        console.log('[WebApi] Executing script to check and fill popup', script);
+        this.window.webContents.executeJavaScript(script);
     }
     
     onTimeboardResult(info) {
@@ -84,7 +101,7 @@ class WebApi {
     
     onAjaxComplete(info) {
         const { url } = info;
-        // console.log('[WebApi] onAjaxComplete:', url);
+        console.log('[WebApi] onAjaxComplete:', url);
         
         // todaycheck.php 처리
         if (url.includes('/skin/orders/todaycheck.php')) {
